@@ -616,15 +616,15 @@ class GameScreen(Screen):
         self.query_one("#room-name", Static).update(f"[ {room.name} ]")
         self.query_one("#room-desc", Static).update(room.description)
 
-        # 포인트 목록
+        # 포인트 목록 — 한글은 터미널에서 2셀 너비이므로 고정폭 패딩 대신 탭 구분 사용
         lines = []
         for p in self._state.visible_points():
             if p.puzzle and p.id not in self._state.solved_puzzles:
-                lines.append(f"  • {p.name:<18} ({p.id})  [잠김]")
+                lines.append(f"  - {p.name}  ({p.id})  [잠김]")
             elif p.id in self._state.solved_puzzles and p.puzzle:
-                lines.append(f"  • {p.name:<18} ({p.id})  [완료]")
+                lines.append(f"  - {p.name}  ({p.id})  [완료]")
             else:
-                lines.append(f"  • {p.name:<18} ({p.id})")
+                lines.append(f"  - {p.name}  ({p.id})")
         self.query_one("#points-list", Static).update("\n".join(lines) if lines else "  (없음)")
 
     def _refresh_inventory(self) -> None:
