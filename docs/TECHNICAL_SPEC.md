@@ -60,26 +60,32 @@
 
 ```
 open-clue/
-├── clue/
-│   ├── __init__.py
-│   ├── main.py              # Typer CLI 진입점 (play, build, verify)
-│   ├── engine/
-│   │   ├── state.py         # GameState: Room, Inventory, Flags 관리
-│   │   ├── parser.py        # 명령어 파서 및 액션 디스패처
-│   │   └── mechanics.py     # 퍼즐, 아이템 사용, 방 이동 로직
-│   ├── cipher/
-│   │   ├── encrypt.py       # AES-256 GCM 암호화 (Builder용)
-│   │   └── decrypt.py       # AES-256 GCM 복호화 (Player용)
-│   ├── schema/
-│   │   ├── models.py        # Pydantic 데이터 모델 정의
-│   │   └── validator.py     # 시나리오 로직 무결성 검사
-│   └── ui/
-│       ├── renderer.py      # Rich 기반 TUI 렌더링
-│       └── ascii.py         # ASCII 아트 유틸리티
-├── scenarios/               # 샘플 시나리오 JSON 파일들
-├── tests/
-├── pyproject.toml
-└── README.md
+├── docs/                    # 기획 문서
+├── engine/                  # Python CLI 게임 엔진
+│   ├── clue/
+│   │   ├── __init__.py
+│   │   ├── main.py              # Typer CLI 진입점 (play, build, verify)
+│   │   ├── engine/
+│   │   │   ├── state.py         # GameState: Room, Inventory, Flags 관리
+│   │   │   ├── parser.py        # 명령어 파서 및 액션 디스패처
+│   │   │   └── mechanics.py     # 퍼즐, 아이템 사용, 방 이동 로직
+│   │   ├── cipher/
+│   │   │   ├── encrypt.py       # AES-256 GCM 암호화 (Builder용)
+│   │   │   └── decrypt.py       # AES-256 GCM 복호화 (Player용)
+│   │   ├── schema/
+│   │   │   ├── models.py        # Pydantic 데이터 모델 정의
+│   │   │   └── validator.py     # 시나리오 로직 무결성 검사
+│   │   └── ui/
+│   │       ├── renderer.py      # Rich 기반 TUI 렌더링
+│   │       └── ascii.py         # ASCII 아트 유틸리티
+│   ├── scenarios/               # 샘플 시나리오 JSON 파일들
+│   ├── tests/
+│   ├── pyproject.toml
+│   └── README.md
+├── web/                     # (예정) 랜딩 페이지
+├── backend/                 # (예정) 백엔드 API 서버
+├── platform/                # (예정) 플랫폼 웹 페이지
+└── README.md                # 루트 README
 ```
 
 ---
