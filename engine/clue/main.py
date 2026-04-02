@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import sys
 from pathlib import Path
 from typing import Optional
 
@@ -12,10 +13,28 @@ app = typer.Typer(
     name="clue",
     help="OpenClue — Terminal-Based Escape Room Engine",
     add_completion=False,
+    invoke_without_command=True,
 )
 
-# 시나리오 파일을 탐색할 기본 디렉토리 (실행 파일 기준)
-_DEFAULT_SCENARIO_DIR = Path(__file__).parent.parent / "scenarios"
+
+def _get_scenario_dir() -> Path:
+    """PyInstaller 번들 환경과 일반 개발 환경 모두에서 올바른 scenarios/ 경로를 반환합니다."""
+    if getattr(sys, "frozen", False):
+        # PyInstaller --onefile: 번들 리소스는 _MEIPASS 임시 디렉토리에 압축 해제됨
+        return Path(sys._MEIPASS) / "scenarios"
+    # 일반 개발 환경: engine/scenarios/
+    return Path(__file__).parent.parent / "scenarios"
+
+
+# 시나리오 파일을 탐색할 기본 디렉토리
+_DEFAULT_SCENARIO_DIR = _get_scenario_dir()
+
+
+@app.callback(invoke_without_command=True)
+def default(ctx: typer.Context) -> None:
+    """OpenClue를 실행합니다. 서브커맨드 없이 실행하면 게임을 시작합니다."""
+    if ctx.invoked_subcommand is None:
+        play(scenario=None)
 
 
 # ---------------------------------------------------------------------------
