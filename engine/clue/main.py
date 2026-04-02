@@ -95,10 +95,7 @@ def play(
         # scenarios/ 디렉토리 자동 탐색
         scan_dir = _DEFAULT_SCENARIO_DIR
         if scan_dir.exists():
-            paths = sorted(
-                list(scan_dir.glob("*.dat")) + list(scan_dir.glob("*.json")),
-                key=lambda p: p.name,
-            )
+            paths = sorted(scan_dir.glob("*.dat"), key=lambda p: p.name)
         if not paths:
             typer.echo("[오류] 시나리오 파일을 찾을 수 없습니다.", err=True)
             typer.echo(f"  탐색 위치: {scan_dir}", err=True)
