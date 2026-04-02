@@ -37,53 +37,64 @@ Screen {
 }
 
 /* ── SelectScreen ── */
-#select-container {
+SelectScreen {
     align: center middle;
-    width: 100%;
-    height: 100%;
 }
 
-#logo-box {
-    width: 70;
-    border: double #00ff9f;
-    padding: 1 3;
-    margin-bottom: 1;
-    content-align: center middle;
+#select-wrapper {
+    width: 72;
+    height: auto;
+    align: center middle;
 }
 
 #logo-text {
     color: #00ff9f;
     text-style: bold;
+    width: 100%;
+    content-align: center middle;
+    border: double #00ff9f;
+    padding: 1 2;
+    margin-bottom: 1;
 }
 
 #select-title {
-    color: #aaaaaa;
+    color: #888888;
     margin-bottom: 1;
-    text-align: center;
+    width: 100%;
+    content-align: center middle;
 }
 
-ListView {
-    width: 60;
+#scenario-list {
+    width: 100%;
     height: auto;
+    max-height: 15;
     background: #111111;
     border: solid #333333;
+    margin-bottom: 1;
 }
 
-ListView > ListItem {
+#scenario-list > ListItem {
     padding: 0 2;
     color: #cccccc;
+    height: 3;
 }
 
-ListView > ListItem.--highlight {
+#scenario-list > ListItem.--highlight {
     background: #003322;
     color: #00ff9f;
     text-style: bold;
 }
 
+#scenario-list:focus > ListItem.--highlight {
+    background: #004433;
+    color: #00ff9f;
+    text-style: bold;
+}
+
 #select-footer {
-    color: #555555;
-    margin-top: 1;
-    text-align: center;
+    color: #444444;
+    width: 100%;
+    content-align: center middle;
 }
 
 /* ── GameScreen ── */
@@ -348,17 +359,21 @@ class SelectScreen(Screen):
         self._on_select = on_select
 
     def compose(self) -> ComposeResult:
-        with Vertical(id="select-container"):
+        with Vertical(id="select-wrapper"):
             yield Static(LOGO, id="logo-text")
             yield Static("Terminal Escape Room Engine", id="select-title")
             items = []
             for info in self._infos:
                 stars = _star(info["difficulty"])
                 mins = f"  ~{info['estimated_minutes']}분" if info["estimated_minutes"] else ""
-                label = f"  {info['title']}    {stars}{mins}"
+                label = f"{info['title']}\n  {stars}{mins}"
                 items.append(ListItem(Label(label)))
             yield ListView(*items, id="scenario-list")
-            yield Static("↑↓ 이동   Enter 선택   q 종료", id="select-footer")
+            yield Static("↑ ↓  이동     Enter  선택     q  종료", id="select-footer")
+
+    def on_mount(self) -> None:
+        # ListView에 포커스를 주어야 키보드 입력이 동작함
+        self.query_one("#scenario-list", ListView).focus()
 
     def on_list_view_selected(self, event: ListView.Selected) -> None:
         idx = event.list_view.index

@@ -15,7 +15,7 @@ app = typer.Typer(
 )
 
 # 시나리오 파일을 탐색할 기본 디렉토리 (실행 파일 기준)
-_DEFAULT_SCENARIO_DIR = Path(__file__).parent.parent.parent / "scenarios"
+_DEFAULT_SCENARIO_DIR = Path(__file__).parent.parent / "scenarios"
 
 
 # ---------------------------------------------------------------------------

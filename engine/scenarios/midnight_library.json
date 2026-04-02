@@ -1,0 +1,182 @@
+{
+  "scenario_id": "midnight_library_01",
+  "version": "1.0",
+  "title": "심야 도서관",
+  "author": "OpenClue",
+  "difficulty": 4,
+  "estimated_minutes": 35,
+  "start_room_id": "room_reading",
+  "flags": {},
+  "items": [
+    {
+      "id": "library_card",
+      "name": "도서관 카드",
+      "description": "이름란이 비어있는 도서관 회원 카드. 마그네틱 선이 아직 살아있을지도 모른다.",
+      "usable_on": ["archive_door"]
+    },
+    {
+      "id": "torn_note",
+      "name": "찢어진 쪽지",
+      "description": "누군가 급히 찢어낸 듯한 쪽지. '...황금비의 법칙이 아니다. 출판연도 각 자리의 합이 핵심이다...'",
+      "usable_on": ["librarian_door"]
+    },
+    {
+      "id": "master_key",
+      "name": "마스터 키",
+      "description": "낡은 황동 열쇠. '서고 마스터' 라고 각인되어 있다.",
+      "usable_on": ["librarian_door"]
+    },
+    {
+      "id": "exit_key",
+      "name": "비상구 열쇠",
+      "description": "녹색 형광 스티커가 붙은 열쇠. '비상구 전용' 이라고 적혀있다.",
+      "usable_on": ["exit_door"]
+    }
+  ],
+  "rooms": [
+    {
+      "id": "room_reading",
+      "name": "열람실",
+      "description": "형광등이 꺼진 열람실. 비상등의 붉은빛만이 공간을 물들이고 있다.\n책상들이 줄지어 서 있고, 낡은 책장들이 벽을 가득 채우고 있다.\n어디선가 바람 소리가 들린다. 창문은 모두 잠겨있다.",
+      "points": [
+        {
+          "id": "reading_desk",
+          "name": "열람 책상",
+          "description": "정리되지 않은 열람 책상. 각종 메모지와 책들이 어지럽다.",
+          "observation": "책상 맨 아래 서랍을 열자, 잊혀진 물건들 사이에서\n낡은 도서관 카드 한 장이 나왔다.\n\n이름란은 비어있다. 발급일: 1977.09.12",
+          "action": {"type": "get_item", "value": "library_card"}
+        },
+        {
+          "id": "bookshelf_a",
+          "name": "서가 A구역",
+          "description": "천장까지 닿는 책장. 수백 권의 책들이 빽빽하게 꽂혀있다.",
+          "observation": "한 권의 책이 다른 책들 사이에서 삐죽 나와 있다.\n\n  제목: 『별들의 전쟁과 평화』\n  저자: A. 스미스\n  출판연도: 1977\n\n책을 꺼내 펼쳐보니, 첫 페이지에 붉은 펜으로 밑줄이 그어져 있다:\n'모든 암호는 시간에서 비롯된다.'"
+        },
+        {
+          "id": "wall_clock",
+          "name": "벽시계",
+          "description": "열람실 정면 벽에 걸린 대형 시계.",
+          "observation": "시계가 멈춰있다.\n\n     ┌──────────┐\n     │  11 : 47 │\n     │          │\n     │  정 지   │\n     └──────────┘\n\n초침이 움직이지 않는다. 언제 멈춘 것일까."
+        },
+        {
+          "id": "notice_board",
+          "name": "공지 게시판",
+          "description": "입구 옆 공지 게시판. 각종 안내문이 붙어있다.",
+          "observation": "여러 공지들 중 '서고 이용 안내'가 눈에 띈다.\n\n  서고 출입 시 반드시 도서관 카드를 소지할 것.\n  서고 비밀번호는 담당 사서에게 문의.\n  [주의] 사서실은 마스터 키 소지자만 출입 가능.\n\n담당 사서... 지금은 아무도 없다."
+        },
+        {
+          "id": "archive_door",
+          "name": "서고 문",
+          "description": "두꺼운 철제 문. 카드 리더기 아래에 숫자 패드가 달려있다.",
+          "requirements": {"item_id": "library_card"},
+          "observation": "도서관 카드를 리더기에 대자 삑 소리와 함께\n화면이 켜진다. '카드 인식 완료. 비밀번호를 입력하세요.'",
+          "puzzle": {
+            "type": "text_input",
+            "question": "보안 패드 화면:\n\n  도서관 카드 인식 완료\n  ─────────────────────────\n  서고 접근 비밀번호 (4자리)를 입력하세요.\n\n  _ _ _ _",
+            "hint": "열람실에서 멈춰있던 것을 생각해봐. 시간은 숫자야.",
+            "answer_hash": "plain:1147",
+            "max_attempts": 5,
+            "fail_message": "삐- '비밀번호 불일치. 다시 시도하세요.'",
+            "on_success": {"type": "move_to", "value": "room_archive"}
+          }
+        }
+      ]
+    },
+    {
+      "id": "room_archive",
+      "name": "서고",
+      "description": "서고 안은 열람실보다 훨씬 어둡다. 좁은 통로 양쪽으로\n금속 서가들이 빼곡히 서 있다. 먼지 냄새가 진하게 풍긴다.\n통로 끝에 '사서실' 이라고 적힌 문이 보인다.",
+      "points": [
+        {
+          "id": "filing_cabinet",
+          "name": "서류 캐비닛",
+          "description": "낡은 금속 서류 캐비닛. 서랍들이 여러 개 달려있다.",
+          "observation": "두 번째 서랍을 열자 각종 서류들이 가득하다.\n맨 아래에서 접힌 쪽지 하나를 발견했다.\n\n  '후임자에게 — 이 방법만 알면 금고를 열 수 있다.\n   황금비의 법칙이 아니다.\n   출판연도 각 자리의 합이 핵심이다.\n   — 전임 사서 김모씨'",
+          "action": {"type": "get_item", "value": "torn_note"}
+        },
+        {
+          "id": "old_terminal",
+          "name": "구형 단말기",
+          "description": "먼지 쌓인 구형 컴퓨터 단말기. 놀랍게도 전원이 들어와 있다.",
+          "observation": "화면에 로그인 상태가 유지되어 있다.\n\n  ┌──────────────────────────────┐\n  │  도서관 관리 시스템 v2.1      │\n  │  로그인: administrator       │\n  │  관리자 ID: ATLAS            │\n  │  마지막 접속: 2047.03.14     │\n  └──────────────────────────────┘\n\n관리자 ID가 눈에 들어온다."
+        },
+        {
+          "id": "restricted_shelf",
+          "name": "금서 서가",
+          "description": "유리문이 달린 특별 서가. '열람 제한 구역' 이라는 표찰이 붙어있다.",
+          "requirements": {"item_id": "torn_note"},
+          "observation": "유리문 안쪽에 책들이 세워져 있다. 그 중 한 권이\n이상하게 두꺼워 보인다. 꺼내보니 책이 아니라\n속이 파인 모조 책이었다.\n\n안에서 황동 열쇠가 나왔다. '서고 마스터'라고 각인되어 있다.",
+          "action": {"type": "get_item", "value": "master_key"}
+        },
+        {
+          "id": "librarian_door",
+          "name": "사서실 문",
+          "description": "통로 끝의 목제 문. '사서실 — 관계자 외 출입금지' 라는 팻말이 달려있다.\n자물쇠 구멍이 보인다.",
+          "requirements": {"item_id": "master_key"},
+          "observation": "마스터 키를 자물쇠에 꽂자 묵직한 소리와 함께 문이 열렸다.",
+          "puzzle": {
+            "type": "text_input",
+            "question": "문이 열리자 내부에 또 다른 보안 패드가 있다.\n\n  사서실 보안 시스템\n  ─────────────────────────\n  2차 인증: 숫자 2자리를 입력하세요.\n\n  힌트: 서가에서 발견한 책의 출판연도,\n       각 자리 숫자를 모두 더하면?",
+            "hint": "서가 A구역에서 찾은 책의 출판연도: 1977. 1+9+7+7=?",
+            "answer_hash": "plain:24",
+            "max_attempts": 5,
+            "fail_message": "삐- '인증 실패.'",
+            "on_success": {"type": "move_to", "value": "room_librarian"}
+          }
+        }
+      ]
+    },
+    {
+      "id": "room_librarian",
+      "name": "사서실",
+      "description": "아담한 사서실. 책상 위에는 각종 문서와 도장들이 가지런히 놓여있다.\n한쪽 벽에는 작은 금고가, 반대편에는 비상구 문이 보인다.\n비상구 문 위의 비상등이 깜빡이고 있다.",
+      "points": [
+        {
+          "id": "desk_calendar",
+          "name": "탁상 달력",
+          "description": "사서 책상 위의 탁상 달력.",
+          "observation": "달력을 넘기다 3월 페이지에서 멈췄다.\n한 날짜에 굵은 펜으로 동그라미가 그려져 있다.\n\n  ┌────────────────────────┐\n  │        3월             │\n  │  ...  14  [15]  16 .. │\n  │                        │\n  │  ※ 금고 변경일         │\n  └────────────────────────┘\n\n15일에 동그라미. 즉, 0315."
+        },
+        {
+          "id": "photo_frame",
+          "name": "사진 액자",
+          "description": "책상 위에 놓인 오래된 사진 액자.",
+          "observation": "도서관 직원들이 찍은 단체 사진이다.\n사진을 뒤집어보니 뒷면에 볼펜으로 메모가 있다.\n\n  '금고 코드 = 관리자ID + 기념일(MMDD)\n   절대 잊지 말 것!'\n\n관리자 ID... 서고의 단말기에서 봤다."
+        },
+        {
+          "id": "safe",
+          "name": "금고",
+          "description": "벽면에 매립된 소형 금고. 숫자+영문 혼합 키패드가 달려있다.",
+          "puzzle": {
+            "type": "text_input",
+            "question": "금고 키패드:\n\n  영문+숫자 혼합 코드를 입력하세요.\n  (예시 형식: ABCD0101)\n\n  관리자ID + 기념일(월월일일)",
+            "hint": "서고 단말기: 관리자 ID = ATLAS / 달력 동그라미 = 0315",
+            "answer_hash": "plain:ATLAS0315",
+            "max_attempts": null,
+            "fail_message": "딸깍- 금고가 열리지 않는다.",
+            "on_success": {
+              "type": "get_item",
+              "value": "exit_key"
+            }
+          }
+        },
+        {
+          "id": "exit_door",
+          "name": "비상구",
+          "description": "초록색 비상구 표시등 아래의 철제 문.\n자물쇠가 달려있다.",
+          "requirements": {"item_id": "exit_key"},
+          "observation": "비상구 열쇠를 자물쇠에 꽂았다. 삐그덕 소리와 함께\n차가운 바깥 공기가 밀려든다.",
+          "puzzle": {
+            "type": "text_input",
+            "question": "문이 열리는가 싶더니 외부 보안 패드가 켜진다.\n\n  비상구 외부 잠금 장치\n  ─────────────────────────\n  최종 탈출 코드 (4자리)를 입력하세요.\n\n  '모든 암호는 시간에서 비롯된다.'",
+            "hint": "열람실의 책. 출판연도 네 자리가 그 자체로 코드다.",
+            "answer_hash": "plain:1977",
+            "max_attempts": null,
+            "fail_message": "삐- '코드 불일치. 잠금이 유지됩니다.'",
+            "on_success": {"type": "game_clear", "value": null}
+          }
+        }
+      ]
+    }
+  ]
+}
