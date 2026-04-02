@@ -1,0 +1,165 @@
+{
+  "scenario_id": "abandoned_lab_01",
+  "version": "1.0",
+  "title": "버려진 연구소",
+  "author": "OpenClue",
+  "difficulty": 3,
+  "estimated_minutes": 25,
+  "start_room_id": "room_detention",
+  "flags": {
+    "has_access_code": false
+  },
+  "items": [
+    {
+      "id": "hairpin",
+      "name": "머리핀",
+      "description": "구부러진 금속 핀. 좁은 틈을 뒤질 때 쓸 수 있을 것 같다.",
+      "usable_on": ["drain"]
+    },
+    {
+      "id": "rusty_key",
+      "name": "녹슨 열쇠",
+      "description": "심하게 녹슬었지만 아직 형태는 남아있다. 자물쇠에 맞을지 모른다.",
+      "usable_on": ["cell_door"]
+    },
+    {
+      "id": "id_card",
+      "name": "신분증",
+      "description": "연구소 직원 신분증. 이름: Dr. Kim. 사진은 훼손되었다.",
+      "usable_on": ["control_door"]
+    },
+    {
+      "id": "torn_memo",
+      "name": "찢긴 메모",
+      "description": "누군가 급히 찢어놓은 듯한 메모 조각. '코드명: NEXUS'라고 적혀있다.",
+      "usable_on": ["exit_terminal"]
+    }
+  ],
+  "rooms": [
+    {
+      "id": "room_detention",
+      "name": "감금실",
+      "description": "차가운 콘크리트 벽과 녹슨 철창이 당신을 가두고 있다.\n형광등 하나가 간헐적으로 깜빡인다. 어디선가 물 떨어지는 소리가 들린다.",
+      "points": [
+        {
+          "id": "bed",
+          "name": "철제 침대",
+          "description": "녹슨 철제 침대. 매트리스가 볼품없이 찌그러져 있다.",
+          "observation": "매트리스 이음새 사이에 끼어있던 무언가가 손에 잡힌다.\n꺼내보니 오래된 머리핀이다.",
+          "action": {"type": "get_item", "value": "hairpin"}
+        },
+        {
+          "id": "wall",
+          "name": "콘크리트 벽",
+          "description": "회색 콘크리트 벽. 이전 수감자들이 남긴 낙서가 가득하다.",
+          "observation": "수많은 낙서 중 하나가 유독 눈에 띈다.\n다른 것과 달리 날카로운 무언가로 깊게 새겨진 숫자:\n\n    [ 27 ]\n\n아래에 희미하게 '기억해'라고 적혀있다."
+        },
+        {
+          "id": "drain",
+          "name": "하수구",
+          "description": "바닥 구석의 막힌 하수구. 쇠그물 틈 사이로 반짝이는 것이 보인다.",
+          "requirements": {"item_id": "hairpin"},
+          "observation": "머리핀을 구부려 쇠그물 사이로 집어넣자, 금속이 금속에 닿는 소리가 난다.\n조심스럽게 꺼내자 오래된 녹슨 열쇠가 나왔다.",
+          "action": {"type": "get_item", "value": "rusty_key"}
+        },
+        {
+          "id": "cell_door",
+          "name": "철창문",
+          "description": "두꺼운 철창으로 만들어진 문. 오래된 전자 자물쇠가 달려있다.\n숫자 패드에 먼지가 가득 쌓여있다.",
+          "requirements": {"item_id": "rusty_key"},
+          "observation": "열쇠를 패널 옆 슬롯에 꽂자 전원이 들어오며 숫자 패드가 켜진다.",
+          "puzzle": {
+            "type": "text_input",
+            "question": "숫자 패드가 깜빡인다.\n\n  '3자리 인증 코드를 입력하시오.'\n\n벽의 낙서가 머릿속에 맴돈다... [ 27 ]",
+            "hint": "벽에 새겨진 숫자 27. 그 숫자 자체의 제곱을 생각해봐.",
+            "answer_hash": "plain:729",
+            "max_attempts": 5,
+            "fail_message": "삐- 오류음이 울린다. '인증 실패. 재시도하시오.'",
+            "on_success": {
+              "type": "move_to",
+              "value": "room_corridor"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "room_corridor",
+      "name": "복도",
+      "description": "긴 복도. 천장의 비상등이 붉은빛을 내뿜으며 어두운 복도를 물들이고 있다.\n복도 끝에 묵직한 철문이 보인다. '제어실'이라는 팻말이 붙어있다.",
+      "points": [
+        {
+          "id": "bulletin_board",
+          "name": "게시판",
+          "description": "벽에 고정된 낡은 게시판. 빛 바랜 공지들이 덕지덕지 붙어있다.",
+          "observation": "공지들을 하나씩 뒤적이다 '인사발령 명단'이라는 제목의 종이를 발견한다.\n\n  연구원 명단 (2047.01 기준)\n  ─────────────────────\n  수석 연구원  Dr. Kim    사번: 4829\n  연구원       Dr. Park   사번: 3341\n  연구원       Dr. Lee    사번: 7752\n  ─────────────────────\n  * 제어실 접근 권한: 수석 연구원 이상\n\n수석 연구원의 사번이 눈에 들어온다."
+        },
+        {
+          "id": "vending_machine",
+          "name": "고장난 자판기",
+          "description": "복도 한켠에 방치된 자판기. 전원이 꺼져있고 내부는 텅 비어있다.",
+          "observation": "자판기 동전 투입구 아래 좁은 틈에 무언가 끼어있다.\n손을 뻗어 조심스럽게 꺼내자 낡은 직원 신분증이 나왔다.\n\n이름: Dr. Kim. 사진 부분은 훼손되어 알아볼 수 없다.",
+          "action": {"type": "get_item", "value": "id_card"}
+        },
+        {
+          "id": "control_door",
+          "name": "제어실 철문",
+          "description": "무거운 강철 문. 카드 리더기와 숫자 패드가 함께 달려있다.",
+          "requirements": {"item_id": "id_card"},
+          "observation": "신분증을 카드 리더기에 대자 녹색 불이 들어온다.\n'카드 인증 완료. 사번을 입력하시오.'",
+          "puzzle": {
+            "type": "text_input",
+            "question": "보안 패널 화면:\n\n  [ CARD VERIFIED ]\n  사번 4자리를 입력하시오.\n\n  _ _ _ _",
+            "hint": "게시판 인사발령 명단에서 수석 연구원 Dr. Kim의 사번을 확인했다.",
+            "answer_hash": "plain:4829",
+            "max_attempts": 3,
+            "fail_message": "삐빅- '사번 불일치. 보안 경보가 발령됩니다.'",
+            "on_success": {
+              "type": "move_to",
+              "value": "room_control"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "room_control",
+      "name": "제어실",
+      "description": "각종 계기판과 모니터로 가득한 방. 대부분의 장비는 전원이 꺼져있지만\n메인 콘솔과 CCTV 모니터만 희미하게 작동 중이다.\n방 한 켠의 두꺼운 철제 탈출구에 붉은 경고등이 켜져있다.",
+      "points": [
+        {
+          "id": "console",
+          "name": "메인 콘솔",
+          "description": "먼지가 두텁게 쌓인 메인 콘솔. 수십 개의 버튼과 스위치가 있다.",
+          "observation": "콘솔 위를 살피다가 사이드 패널 아래쪽에 테이프로 붙여놓은 종이를 발견한다.\n떼어보니 누군가 급히 찢어놓은 듯 가장자리가 너덜너덜하다.\n\n  ┌─────────────────────────┐\n  │  비상 탈출 인증 코드     │\n  │                         │\n  │  코드명 :  N E X U S    │\n  │                         │\n  │  * 탈출구 단말기에 입력  │\n  └─────────────────────────┘",
+          "action": {"type": "get_item", "value": "torn_memo"}
+        },
+        {
+          "id": "cctv_monitor",
+          "name": "CCTV 모니터",
+          "description": "여러 구역을 번갈아 보여주는 CCTV 모니터.",
+          "observation": "화면들이 차례로 바뀐다. 감금실, 복도, 연구실... 모두 텅 비어있다.\n마지막 화면에서 연구소 외부가 잠깐 비친다. 새벽빛이 창문으로 들어오고 있다.\n\n밖은 아직 세상이 돌아가고 있다. 나가야 한다."
+        },
+        {
+          "id": "exit_terminal",
+          "name": "탈출구 단말기",
+          "description": "탈출구 옆에 설치된 단말기. 화면에 커서가 깜빡이고 있다.\n\n  > EMERGENCY EXIT SYSTEM v2.3\n  > 인증 코드를 입력하시오 :",
+          "requirements": {"item_id": "torn_memo"},
+          "observation": "메모를 다시 한번 확인하고 단말기 앞에 선다.",
+          "puzzle": {
+            "type": "text_input",
+            "question": "단말기 화면:\n\n  > EMERGENCY EXIT SYSTEM v2.3\n  > 인증 코드명을 입력하시오 :\n\n  (메모에 적힌 코드명을 입력해)",
+            "hint": "콘솔 아래에서 찾은 찢긴 메모를 다시 확인해봐.",
+            "answer_hash": "plain:NEXUS",
+            "max_attempts": null,
+            "fail_message": "  > 인증 실패. 코드를 다시 확인하시오.",
+            "on_success": {
+              "type": "game_clear",
+              "value": null
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
