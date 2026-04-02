@@ -446,21 +446,26 @@ class GameScreen(Screen):
         # 입력창
         with Horizontal(id="input-area"):
             yield Static(">", id="input-prompt")
-            yield Input(placeholder="명령어를 입력하세요...", id="cmd-input")
+            yield Input(placeholder="command...", id="cmd-input")
 
     # ------------------------------------------------------------------ mount
     def on_mount(self) -> None:
         self._refresh_room()
         self._log("게임을 시작합니다. look 으로 주변을 살펴보세요.", "log-info")
-        self.query_one("#cmd-input", Input).focus()
+        cmd_input = self.query_one("#cmd-input", Input)
+        cmd_input.cursor_blink = False
+        cmd_input.focus()
         self.set_interval(1, self._tick_timer)
 
     # ------------------------------------------------------------------ timer
     def _tick_timer(self) -> None:
-        elapsed = datetime.now() - self._state.start_time
-        total = int(elapsed.total_seconds())
-        m, s = divmod(total, 60)
-        self.query_one("#header-timer", Static).update(f"경과: {m:02d}:{s:02d}")
+        try:
+            elapsed = datetime.now() - self._state.start_time
+            total = int(elapsed.total_seconds())
+            m, s = divmod(total, 60)
+            self.query_one("#header-timer", Static).update(f"경과: {m:02d}:{s:02d}")
+        except Exception:
+            pass
 
     # ------------------------------------------------------------------ input
     def on_input_submitted(self, event: Input.Submitted) -> None:
@@ -567,7 +572,7 @@ class GameScreen(Screen):
         for line in question.splitlines():
             self._log(line, "log-puzzle")
         input_widget = self.query_one("#cmd-input", Input)
-        input_widget.placeholder = "정답을 입력하세요..."
+        input_widget.placeholder = "answer..."
         self.query_one("#input-prompt", Static).update("[?]")
 
     def _handle_puzzle_answer(self, raw: str) -> None:
@@ -597,7 +602,7 @@ class GameScreen(Screen):
     def _exit_puzzle_mode(self) -> None:
         self._puzzle_mode = False
         self._current_puzzle_point_id = None
-        self.query_one("#cmd-input", Input).placeholder = "명령어를 입력하세요..."
+        self.query_one("#cmd-input", Input).placeholder = "command..."
         self.query_one("#input-prompt", Static).update(">")
 
     # ------------------------------------------------------------------ refresh
@@ -661,9 +666,9 @@ class GameScreen(Screen):
             style = style_map.get(css, "#888888")
             t.append(text + "\n", style=style)
         content.update(t)
-        # 스크롤 하단 고정
+        # 스크롤 하단 고정 — 리사이즈 중 레이아웃 재계산과 충돌하지 않도록 지연
         log_area = self.query_one("#log-area", ScrollableContainer)
-        log_area.scroll_end(animate=False)
+        log_area.call_after_refresh(log_area.scroll_end, animate=False)
 
     # ------------------------------------------------------------------ clear
     def _show_clear(self) -> None:
