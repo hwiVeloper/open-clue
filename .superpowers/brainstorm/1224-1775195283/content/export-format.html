@@ -1,0 +1,42 @@
+<h2>내보내기 — 어떤 형식으로?</h2>
+<p class="subtitle">검증 통과 후 마지막 단계에서 어떤 출력을 줄지 결정합니다</p>
+
+<div class="options">
+
+  <div class="option" data-choice="a" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>JSON + DAT 동시 저장</h3>
+      <p>내보내기 버튼 하나로 <code>scenario.json</code>(편집용)과 <code>scenario.dat</code>(배포용)를 동시에 저장. 선택지 없이 항상 둘 다.</p>
+      <ul style="color:#888;font-size:13px;margin-top:8px">
+        <li>가장 단순한 UX — 고민할 필요 없음</li>
+        <li>JSON이 노출되는 게 싫은 배포자에겐 불편할 수 있음</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="option" data-choice="b" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>선택 저장 (JSON / DAT / 둘 다)</h3>
+      <p>내보내기 화면에서 체크박스로 원하는 형식을 선택. 개발 중엔 JSON만, 배포 시엔 DAT만, 아니면 둘 다.</p>
+      <ul style="color:#888;font-size:13px;margin-top:8px">
+        <li>유연하지만 한 단계 더 생김</li>
+        <li>대부분의 사용자는 "둘 다"를 고를 가능성 높음</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="option" data-choice="c" onclick="toggleSelect(this)">
+    <div class="letter">C</div>
+    <div class="content">
+      <h3>JSON 저장 후 빌드는 별도 명령</h3>
+      <p>빌더는 <code>.json</code>만 저장. DAT 변환은 기존 <code>clue build</code> 명령으로 따로. 빌더와 빌드를 분리.</p>
+      <ul style="color:#888;font-size:13px;margin-top:8px">
+        <li>역할이 명확히 분리됨</li>
+        <li>배포까지 두 단계 필요</li>
+      </ul>
+    </div>
+  </div>
+
+</div>

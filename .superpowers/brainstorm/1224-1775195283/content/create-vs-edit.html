@@ -1,0 +1,30 @@
+<h2>빌더 진입 방식 — 새로 만들기만? 아니면 기존 파일 수정도?</h2>
+<p class="subtitle">빌더를 어떻게 열 수 있어야 하는지 결정합니다</p>
+
+<div class="options">
+
+  <div class="option" data-choice="a" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>새로 만들기만</h3>
+      <p><code>clue create</code> 하나. 항상 빈 시나리오에서 시작. 기존 .json 수정은 텍스트 에디터로.</p>
+      <ul style="color:#888;font-size:13px;margin-top:8px">
+        <li>구현 단순</li>
+        <li>수정 작업은 직접 JSON 편집</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="option" data-choice="b" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>새로 만들기 + 기존 파일 불러오기</h3>
+      <p><code>clue create</code>는 새 시나리오, <code>clue edit scenario.json</code>은 기존 파일을 불러와 같은 TUI로 편집. 내보낼 때 덮어쓰거나 다른 이름으로 저장.</p>
+      <ul style="color:#888;font-size:13px;margin-top:8px">
+        <li>완성된 시나리오를 TUI로 수정 가능</li>
+        <li>구현량이 A보다 많음 (불러오기 + 저장 분기)</li>
+      </ul>
+    </div>
+  </div>
+
+</div>

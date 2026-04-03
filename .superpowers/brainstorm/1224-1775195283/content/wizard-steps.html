@@ -1,0 +1,61 @@
+<h2>위자드 단계 구성 — 어떤 흐름이 맞나요?</h2>
+<p class="subtitle">시나리오를 처음 만드는 사람 기준으로, 어떤 순서가 자연스러울까요?</p>
+
+<div class="options">
+
+  <div class="option" data-choice="a" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>메타 → 아이템 → 방 → 포인트 → 검증 → 내보내기</h3>
+      <p>스키마 구조 그대로 순서를 따라가는 흐름. 제목/난이도 설정 먼저, 그 다음 등장 아이템 정의, 그 다음 방을 하나씩 추가하며 각 방의 포인트까지 편집.</p>
+      <div class="mockup" style="margin-top:12px">
+        <div class="mockup-header">화면 흐름</div>
+        <div class="mockup-body" style="font-size:13px;color:#aaa">
+          <span style="color:#00ff9f">①메타</span> →
+          <span style="color:#00ff9f">②아이템</span> →
+          <span style="color:#ffcc00">③방 목록</span> →
+          <span style="color:#ffcc00">④포인트 편집</span> →
+          <span style="color:#4499ff">⑤검증</span> →
+          <span style="color:#cc88ff">⑥내보내기</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="option" data-choice="b" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>메타 → 방 구조 → 방별 상세(포인트+아이템) → 검증 → 내보내기</h3>
+      <p>먼저 방의 큰 그림(이름, 설명, 연결)을 잡고, 그 다음 방마다 들어가서 포인트·아이템을 채워 넣는 흐름. 시나리오 설계자 관점에서 자연스러움.</p>
+      <div class="mockup" style="margin-top:12px">
+        <div class="mockup-header">화면 흐름</div>
+        <div class="mockup-body" style="font-size:13px;color:#aaa">
+          <span style="color:#00ff9f">①메타</span> →
+          <span style="color:#ffcc00">②방 목록/연결</span> →
+          <span style="color:#ffcc00">③방 상세(포인트+아이템)</span> × N방 →
+          <span style="color:#4499ff">④검증</span> →
+          <span style="color:#cc88ff">⑤내보내기</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="option" data-choice="c" onclick="toggleSelect(this)">
+    <div class="letter">C</div>
+    <div class="content">
+      <h3>자유 편집 메뉴 방식 (위자드 없음)</h3>
+      <p>메인 메뉴에서 "방 편집", "아이템 편집", "메타 편집" 등을 자유롭게 오가는 방식. 순서 제약 없음. 저장/나가기 언제든 가능.</p>
+      <div class="mockup" style="margin-top:12px">
+        <div class="mockup-header">메인 메뉴</div>
+        <div class="mockup-body" style="font-size:13px;color:#aaa">
+          [1] 시나리오 정보<br>
+          [2] 아이템 관리<br>
+          [3] 방 관리<br>
+          [4] 검증 및 내보내기<br>
+          [q] 저장 후 종료
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>

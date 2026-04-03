@@ -1,0 +1,63 @@
+<h2>시나리오 빌더 — 어떤 방식으로 만들까요?</h2>
+<p class="subtitle">세 가지 접근법 중 하나를 선택하세요</p>
+
+<div class="options">
+
+  <div class="option" data-choice="a" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>TUI 폼 에디터</h3>
+      <p>터미널 안에서 탭/화살표키로 이동하며 방·포인트·퍼즐을 입력하는 폼 기반 인터페이스. 게임과 같은 Textual 프레임워크로 구현.</p>
+      <div class="pros-cons">
+        <div class="pros"><h4>장점</h4><ul>
+          <li>별도 환경 불필요 (터미널만 있으면 됨)</li>
+          <li>기존 코드(Textual, Pydantic 모델)와 완전히 공유</li>
+          <li>실행 파일에 바로 포함 가능</li>
+        </ul></div>
+        <div class="cons"><h4>단점</h4><ul>
+          <li>터미널 폼 UX의 한계 (복잡한 관계 편집이 불편)</li>
+          <li>방 구조(그래프)를 시각적으로 보기 어려움</li>
+        </ul></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="option" data-choice="b" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>JSON 스캐폴딩 + CLI 헬퍼</h3>
+      <p><code>clue new</code> 명령으로 골격 JSON을 생성하고, 사용자가 직접 편집한 뒤 <code>clue verify</code> → <code>clue build</code>로 완성. 빌더는 "편집 보조" 역할.</p>
+      <div class="pros-cons">
+        <div class="pros"><h4>장점</h4><ul>
+          <li>구현이 단순하고 빠름</li>
+          <li>텍스트 에디터 자유롭게 활용 가능</li>
+          <li>스키마 문서만 잘 써두면 진입장벽 낮음</li>
+        </ul></div>
+        <div class="cons"><h4>단점</h4><ul>
+          <li>JSON을 직접 써야 해서 비개발자에겐 불친절</li>
+          <li>"빌더"라고 부르기 어려운 수준</li>
+        </ul></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="option" data-choice="c" onclick="toggleSelect(this)">
+    <div class="letter">C</div>
+    <div class="content">
+      <h3>TUI 스텝 위자드</h3>
+      <p>단계별 안내 화면(메타정보 → 아이템 → 방 목록 → 방별 포인트 → 검증 → 내보내기)으로 시나리오를 처음부터 완성. 언제든 저장하고 재개 가능.</p>
+      <div class="pros-cons">
+        <div class="pros"><h4>장점</h4><ul>
+          <li>비개발자도 단계를 따라가며 시나리오 완성 가능</li>
+          <li>각 단계에서 즉시 검증 피드백 제공</li>
+          <li>완성 후 JSON/DAT 동시 내보내기 자연스럽게 포함</li>
+        </ul></div>
+        <div class="cons"><h4>단점</h4><ul>
+          <li>구현 분량이 A보다 많음</li>
+          <li>복잡한 시나리오(방 많음)는 위자드 흐름이 길어짐</li>
+        </ul></div>
+      </div>
+    </div>
+  </div>
+
+</div>
