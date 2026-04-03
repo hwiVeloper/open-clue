@@ -32,6 +32,12 @@ jobs:
           pip install --upgrade pip
           pip install ".[dev]"
 
+      - name: Build scenario dat files
+        working-directory: engine
+        run: |
+          clue build scenarios/abandoned_lab.json
+          clue build scenarios/midnight_library.json
+
       - name: Build with PyInstaller (Windows)
         if: runner.os == 'Windows'
         working-directory: engine
