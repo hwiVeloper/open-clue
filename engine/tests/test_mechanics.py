@@ -1,0 +1,205 @@
+"""clue.engine.mechanics 테스트"""
+from __future__ import annotations
+
+import hashlib
+
+import pytest
+
+from clue.schema.models import Action, Item, Point, Puzzle, Room, Scenario
+from clue.engine.state import GameState
+from clue.engine import mechanics
+
+
+# ---------------------------------------------------------------------------
+# Fixtures
+# ---------------------------------------------------------------------------
+
+def _hash(text: str) -> str:
+    return hashlib.sha256(text.encode()).hexdigest()
+
+
+def _make_scenario(extra_rooms: list[dict] | None = None) -> Scenario:
+    data = {
+        "scenario_id": "test",
+        "version": "1.0",
+        "title": "테스트",
+        "start_room_id": "room1",
+        "flags": {"lights": False},
+        "items": [
+            {"id": "key", "name": "열쇠", "description": "녹슨 열쇠"},
+        ],
+        "rooms": [
+            {
+                "id": "room1",
+                "name": "방1",
+                "description": "출발 방",
+                "points": [
+                    {
+                        "id": "exit",
+                        "name": "출구",
+                        "description": "탈출구",
+                        "action": {"type": "game_clear", "value": None},
+                    }
+                ],
+            },
+            {
+                "id": "room2",
+                "name": "방2",
+                "description": "두 번째 방",
+                "points": [],
+            },
+        ],
+    }
+    if extra_rooms:
+        data["rooms"].extend(extra_rooms)
+    return Scenario.model_validate(data)
+
+
+def _state(scenario: Scenario | None = None) -> GameState:
+    s = scenario or _make_scenario()
+    return GameState.from_scenario(s)
+
+
+def _point_with_puzzle(answer: str, max_attempts: int | None = None) -> Point:
+    return Point(
+        id="lock",
+        name="자물쇠",
+        description="숫자 자물쇠",
+        puzzle=Puzzle(
+            question="비밀번호는?",
+            answer_hash=_hash(answer),
+            max_attempts=max_attempts,
+            on_success=Action(type="game_clear"),
+        ),
+    )
+
+
+# ---------------------------------------------------------------------------
+# execute_actions: get_item
+# ---------------------------------------------------------------------------
+
+def test_get_item_adds_to_inventory():
+    state = _state()
+    action = Action(type="get_item", value="key")
+    results = mechanics.execute_actions(state, action)
+    assert state.has_item("key")
+    assert results[0].item_gained == "key"
+
+
+def test_get_item_already_owned():
+    state = _state()
+    state.add_item("key")
+    action = Action(type="get_item", value="key")
+    results = mechanics.execute_actions(state, action)
+    assert results[0].item_gained is None
+
+
+# ---------------------------------------------------------------------------
+# execute_actions: set_flag
+# ---------------------------------------------------------------------------
+
+def test_set_flag():
+    state = _state()
+    action = Action(type="set_flag", value={"lights": True})
+    mechanics.execute_actions(state, action)
+    assert state.flags["lights"] is True
+
+
+# ---------------------------------------------------------------------------
+# execute_actions: move_to
+# ---------------------------------------------------------------------------
+
+def test_move_to_changes_room():
+    state = _state()
+    action = Action(type="move_to", value="room2")
+    results = mechanics.execute_actions(state, action)
+    assert state.current_room_id == "room2"
+    assert results[0].moved is True
+
+
+def test_move_to_nonexistent_room():
+    state = _state()
+    action = Action(type="move_to", value="ghost")
+    results = mechanics.execute_actions(state, action)
+    assert state.current_room_id == "room1"  # 이동 안 됨
+    assert results[0].moved is False
+
+
+# ---------------------------------------------------------------------------
+# execute_actions: game_clear
+# ---------------------------------------------------------------------------
+
+def test_game_clear():
+    state = _state()
+    action = Action(type="game_clear")
+    results = mechanics.execute_actions(state, action)
+    assert state.cleared is True
+    assert results[0].cleared is True
+
+
+# ---------------------------------------------------------------------------
+# attempt_puzzle
+# ---------------------------------------------------------------------------
+
+def test_puzzle_correct_answer():
+    state = _state()
+    point = _point_with_puzzle("1234")
+    success, msg = mechanics.attempt_puzzle(state, point, "1234")
+    assert success is True
+    assert "lock" in state.solved_puzzles
+
+
+def test_puzzle_wrong_answer():
+    state = _state()
+    point = _point_with_puzzle("1234")
+    success, msg = mechanics.attempt_puzzle(state, point, "0000")
+    assert success is False
+    assert "lock" not in state.solved_puzzles
+
+
+def test_puzzle_max_attempts_exceeded():
+    state = _state()
+    point = _point_with_puzzle("1234", max_attempts=2)
+
+    mechanics.attempt_puzzle(state, point, "wrong")
+    success, msg = mechanics.attempt_puzzle(state, point, "wrong")
+
+    assert success is False
+    assert "초과" in msg
+
+
+def test_puzzle_correct_on_last_attempt():
+    state = _state()
+    point = _point_with_puzzle("1234", max_attempts=2)
+
+    mechanics.attempt_puzzle(state, point, "wrong")
+    success, _ = mechanics.attempt_puzzle(state, point, "1234")
+
+    assert success is True
+
+
+# ---------------------------------------------------------------------------
+# can_attempt_puzzle
+# ---------------------------------------------------------------------------
+
+def test_can_attempt_puzzle_already_solved():
+    state = _state()
+    point = _point_with_puzzle("1234")
+    state.solved_puzzles.add("lock")
+    can, _ = mechanics.can_attempt_puzzle(state, point)
+    assert can is False
+
+
+def test_can_attempt_puzzle_max_exceeded():
+    state = _state()
+    point = _point_with_puzzle("1234", max_attempts=1)
+    state.puzzle_attempts["lock"] = 1
+    can, _ = mechanics.can_attempt_puzzle(state, point)
+    assert can is False
+
+
+def test_can_attempt_puzzle_ok():
+    state = _state()
+    point = _point_with_puzzle("1234", max_attempts=3)
+    can, _ = mechanics.can_attempt_puzzle(state, point)
+    assert can is True

@@ -16,6 +16,7 @@ from textual.widgets import (
     Label,
     ListItem,
     ListView,
+    ProgressBar,
     Static,
 )
 from textual.reactive import reactive
@@ -237,6 +238,13 @@ SelectScreen {
 .log-puzzle  { color: #cc88ff; }
 .log-observe { color: #ccaa44; }
 
+/* 타임어택 타이머 바 */
+#puzzle-timer-bar {
+    height: 1;
+    margin: 0 2;
+    display: none;
+}
+
 /* 입력창 */
 #input-area {
     height: 3;
@@ -401,6 +409,9 @@ class GameScreen(Screen):
         self._log_lines: list[tuple[str, str]] = []  # (text, css_class)
         self._puzzle_mode = False
         self._current_puzzle_point_id: str | None = None
+        self._puzzle_time_limit: int | None = None
+        self._puzzle_time_remaining: int = 0
+        self._puzzle_timer_handle = None
 
     # ------------------------------------------------------------------ compose
     def compose(self) -> ComposeResult:
@@ -442,6 +453,9 @@ class GameScreen(Screen):
         # 메시지 로그
         with ScrollableContainer(id="log-area"):
             yield Static("", id="log-content")
+
+        # 타임어택 타이머 바 (기본 숨김)
+        yield ProgressBar(total=100, show_eta=False, show_percentage=False, id="puzzle-timer-bar")
 
         # 입력창
         with Horizontal(id="input-area"):
@@ -519,7 +533,7 @@ class GameScreen(Screen):
                 if not can:
                     self._log(reason, "log-error")
                     return
-                self._enter_puzzle_mode(point.id, point.puzzle.question)
+                self._enter_puzzle_mode(point.id, point.puzzle.question, point.puzzle.time_limit_seconds)
             elif not point.observation:
                 self._log("특별한 것을 발견하지 못했습니다.", "log-normal")
 
@@ -565,15 +579,37 @@ class GameScreen(Screen):
             self._log(f"알 수 없는 명령어: '{raw}' — help 를 입력해보세요.", "log-error")
 
     # ------------------------------------------------------------------ puzzle
-    def _enter_puzzle_mode(self, point_id: str, question: str) -> None:
+    def _enter_puzzle_mode(self, point_id: str, question: str, time_limit: int | None = None) -> None:
         self._puzzle_mode = True
         self._current_puzzle_point_id = point_id
         self._log("[ 퍼즐 ]", "log-puzzle")
         for line in question.splitlines():
             self._log(line, "log-puzzle")
+        if time_limit:
+            self._puzzle_time_limit = time_limit
+            self._puzzle_time_remaining = time_limit
+            self._log(f"제한 시간: {time_limit}초", "log-error")
+            bar = self.query_one("#puzzle-timer-bar", ProgressBar)
+            bar.update(total=time_limit, progress=time_limit)
+            bar.display = True
+            self._puzzle_timer_handle = self.set_interval(1, self._tick_puzzle_timer)
         input_widget = self.query_one("#cmd-input", Input)
         input_widget.placeholder = "answer..."
         self.query_one("#input-prompt", Static).update("[?]")
+
+    def _tick_puzzle_timer(self) -> None:
+        self._puzzle_time_remaining -= 1
+        bar = self.query_one("#puzzle-timer-bar", ProgressBar)
+        bar.update(progress=self._puzzle_time_remaining)
+        if self._puzzle_time_remaining <= 0:
+            point = self._state.get_point_in_room(self._current_puzzle_point_id)
+            fail_msg = (
+                point.puzzle.fail_message
+                if point and point.puzzle and point.puzzle.fail_message
+                else "시간 초과! 퍼즐에 실패했습니다."
+            )
+            self._exit_puzzle_mode()
+            self._log(fail_msg, "log-error")
 
     def _handle_puzzle_answer(self, raw: str) -> None:
         point = self._state.get_point_in_room(self._current_puzzle_point_id)
@@ -602,6 +638,12 @@ class GameScreen(Screen):
     def _exit_puzzle_mode(self) -> None:
         self._puzzle_mode = False
         self._current_puzzle_point_id = None
+        if self._puzzle_timer_handle is not None:
+            self._puzzle_timer_handle.stop()
+            self._puzzle_timer_handle = None
+        self._puzzle_time_limit = None
+        bar = self.query_one("#puzzle-timer-bar", ProgressBar)
+        bar.display = False
         self.query_one("#cmd-input", Input).placeholder = "command..."
         self.query_one("#input-prompt", Static).update(">")
 

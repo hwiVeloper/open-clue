@@ -8,35 +8,35 @@
 
 ### Milestone 1-1: 프로젝트 기반 세팅
 
-- [ ] Python 프로젝트 구조 세팅 (`pyproject.toml`, 모듈 분리)
-- [ ] 의존성 설치 (Rich, Pydantic, PyCryptodome, Typer)
-- [ ] `clue` CLI 진입점 기본 구조 작성 (Typer)
-- [ ] 샘플 시나리오 JSON 초안 작성
+- [x] Python 프로젝트 구조 세팅 (`pyproject.toml`, 모듈 분리)
+- [x] 의존성 설치 (Rich, Pydantic, PyCryptodome, Typer)
+- [x] `clue` CLI 진입점 기본 구조 작성 (Typer)
+- [x] 샘플 시나리오 JSON 초안 작성
 
 ### Milestone 1-2: 시나리오 스키마 및 검증
 
-- [ ] Pydantic 데이터 모델 정의 (`Scenario`, `Room`, `Point`, `Puzzle`, `Action`)
-- [ ] `clue verify` 명령어 구현
-  - `start_room_id` 존재 여부 확인
-  - 방-포인트-아이템 참조 무결성 검사
-  - 탈출 경로(`game_clear`) 존재 여부 확인
-  - 고립 방(Dead-end Room) 탐지
+- [x] Pydantic 데이터 모델 정의 (`Scenario`, `Room`, `Point`, `Puzzle`, `Action`)
+- [x] `clue verify` 명령어 구현
+  - [x] `start_room_id` 존재 여부 확인
+  - [x] 방-포인트-아이템 참조 무결성 검사
+  - [x] 탈출 경로(`game_clear`) 존재 여부 확인
+  - [x] 고립 방(Dead-end Room) 탐지
 
 ### Milestone 1-3: 암호화 모듈
 
-- [ ] AES-256-GCM 암호화/복호화 구현 (`PyCryptodome`)
-- [ ] `.dat` 바이너리 파일 포맷 설계 및 구현
+- [x] AES-256-GCM 암호화/복호화 구현 (`PyCryptodome`)
+- [x] `.dat` 바이너리 파일 포맷 설계 및 구현
   - 헤더: MAGIC + VERSION + NONCE + AUTH_TAG
   - 바디: 암호화된 JSON 바이너리
-- [ ] `answer_hash` 자동 변환 (`plain:답` 형식 지원)
-- [ ] `clue build` 명령어 구현
+- [x] `answer_hash` 자동 변환 (`plain:답` 형식 지원)
+- [x] `clue build` 명령어 구현
 
 ### Milestone 1-4: 게임 엔진 핵심 구현
 
-- [ ] `GameState` 객체 구현 (Room, Inventory, Flags, SolvedPuzzles)
-- [ ] Command Parser 구현
+- [x] `GameState` 객체 구현 (Room, Inventory, Flags, SolvedPuzzles)
+- [x] Command Parser 구현
   - `look`, `inspect`, `use`, `inv`, `hint`, `help`, `quit`
-- [ ] 게임 기믹 로직
+- [x] 게임 기믹 로직
   - 조사(Inspect): 묘사 출력, 아이템 획득, 플래그 변경
   - 퍼즐: 정답 입력 → SHA-256 해시 비교 → 액션 실행
   - Requirements 조건 체크 (아이템, 플래그, 풀린 퍼즐)
@@ -45,23 +45,23 @@
 
 ### Milestone 1-5: TUI 렌더링
 
-- [ ] Rich 기반 메인 화면 레이아웃 구성
+- [x] Rich 기반 메인 화면 레이아웃 구성
   - 상단 헤더 (시나리오 제목 + 현재 방)
   - 메인 패널 (방 묘사 + 조사 지점 목록)
   - 하단 인벤토리 바
-- [ ] 게임 이벤트 별 출력 스타일 정의
+- [x] 게임 이벤트 별 출력 스타일 정의
   - 아이템 획득: 초록색 강조
   - 퍼즐 오답: 빨간색 경고
   - 방 이동: 구분선 + 새 방 묘사
   - 클리어: ASCII 아트 + 소요 시간 출력
-- [ ] 타임어택 퍼즐용 Progress Bar 구현
+- [x] 타임어택 퍼즐용 Progress Bar 구현
 
 ### Milestone 1-6: 통합 테스트 및 배포 준비
 
-- [ ] 샘플 시나리오 2개 제작 및 테스트
+- [x] 샘플 시나리오 2개 제작 및 테스트
 - [ ] Windows / macOS 환경 UI 레이아웃 동일성 확인
-- [ ] PyInstaller로 단일 실행 파일 빌드 테스트
-- [ ] README.md 작성 (설치 및 사용법)
+- [ ] PyInstaller로 단일 실행 파일 빌드 테스트 (GitHub Actions 구성 완료, 릴리즈 태그 미발행)
+- [x] README.md 작성 (설치 및 사용법)
 
 ---
 

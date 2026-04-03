@@ -73,6 +73,32 @@ def validate_scenario(scenario: Scenario) -> list[str]:
     if not has_game_clear:
         errors.append("game_clear 액션이 하나도 없습니다. 탈출 경로를 추가하세요.")
 
+    # 고립 방(Dead-end Room) 탐지: start_room에서 move_to로 도달 불가능한 방
+    if scenario.start_room_id in room_ids:
+        reachable: set[str] = set()
+        queue = [scenario.start_room_id]
+        while queue:
+            current = queue.pop()
+            if current in reachable:
+                continue
+            reachable.add(current)
+            room = next((r for r in scenario.rooms if r.id == current), None)
+            if room is None:
+                continue
+            for point in room.points:
+                for action in _collect_actions(point.action):
+                    if action.type == "move_to" and action.value not in reachable:
+                        queue.append(action.value)
+                if point.puzzle:
+                    for action in _collect_actions(point.puzzle.on_success):
+                        if action.type == "move_to" and action.value not in reachable:
+                            queue.append(action.value)
+        unreachable = room_ids - reachable
+        for room_id in sorted(unreachable):
+            errors.append(
+                f"방 '{room_id}'는 start_room에서 도달할 수 없는 고립 방입니다."
+            )
+
     return errors
 
 
