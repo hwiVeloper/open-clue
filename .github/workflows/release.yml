@@ -1,0 +1,78 @@
+name: Build & Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        include:
+          - os: windows-latest
+            artifact: OpenClue.exe
+            asset_name: OpenClue-windows.exe
+          - os: macos-latest
+            artifact: OpenClue
+            asset_name: OpenClue-macos
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        working-directory: engine
+        run: pip install ".[dev]"
+
+      - name: Build with PyInstaller (Windows)
+        if: runner.os == 'Windows'
+        working-directory: engine
+        run: python -m PyInstaller OpenClue.spec
+
+      - name: Build with PyInstaller (macOS)
+        if: runner.os == 'macOS'
+        working-directory: engine
+        run: python -m PyInstaller OpenClue-macos.spec
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.asset_name }}
+          path: engine/dist/${{ matrix.artifact }}
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: dist
+
+      - name: Rename artifacts
+        run: |
+          mv dist/OpenClue-windows.exe/OpenClue.exe dist/OpenClue-windows.exe.bin
+          mv dist/OpenClue-macos/OpenClue dist/OpenClue-macos.bin
+          mkdir release
+          mv dist/OpenClue-windows.exe.bin release/OpenClue-windows.exe
+          mv dist/OpenClue-macos.bin release/OpenClue-macos
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            release/OpenClue-windows.exe
+            release/OpenClue-macos
+          generate_release_notes: true
