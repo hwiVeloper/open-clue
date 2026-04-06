@@ -174,6 +174,7 @@ export function RoomCanvas({
         onEdgesDelete={onEdgesDelete}
         onPaneClick={onPaneClick}
         deleteKeyCode="Delete"
+        colorMode="dark"
         fitView
         fitViewOptions={{ padding: 0.3 }}
         minZoom={0.3}
