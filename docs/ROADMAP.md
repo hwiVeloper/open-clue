@@ -76,7 +76,7 @@
 - [x] `validator.ts` 구현 (`validator.py` 포팅, dead-end 탐지 포함)
 - [x] `cipher.ts` 구현 (Web Crypto API AES-256-GCM)
 - [x] `zip.ts` 구현 (fflate, JSON + DAT → `{제목}.zip`)
-- [x] 5단계 위자드 UI 구현
+- [x] 캔버스 기반 시각적 방 편집기 구현 (React Flow ERD 스타일)
 - [x] localStorage 자동저장
 - [x] JSON 불러오기 (편집 모드)
 - [ ] Vercel 배포
@@ -120,4 +120,4 @@
 ---
 
 **작성일**: 2026-04-02
-**현재 단계**: Phase 1 - Local MVP
+**현재 단계**: Phase 2a - Web Builder (Canvas Editor)

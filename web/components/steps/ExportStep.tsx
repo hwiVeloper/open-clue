@@ -27,7 +27,7 @@ export function ExportStep({ scenario, onPrev, onReset }: ExportStepProps) {
       const datBytes = await buildDat(jsonStr)
       const zipBytes = await buildZip(jsonStr, datBytes)
 
-      const blob = new Blob([zipBytes], { type: 'application/zip' })
+      const blob = new Blob([zipBytes.buffer as ArrayBuffer], { type: 'application/zip' })
       const url = URL.createObjectURL(blob)
       const a = document.createElement('a')
       a.href = url
