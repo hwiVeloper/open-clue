@@ -80,6 +80,19 @@ def verify_answer(user_input: str, answer_hash: str) -> bool:
     return digest == answer_hash
 
 
+def verify_sequence(user_input: str, puzzle_keys: list[str], expected: list[str]) -> bool:
+    """
+    사용자가 입력한 공백 구분 번호 목록을 키 인덱스로 변환해 expected와 비교.
+    예: "1 3 1 4" + keys=["↑","↓","←","→"] → ["↑","←","↑","→"]
+    """
+    parts = user_input.strip().split()
+    try:
+        selected = [puzzle_keys[int(p) - 1] for p in parts]
+    except (ValueError, IndexError):
+        return False
+    return selected == expected
+
+
 def attempt_puzzle(
     state: GameState,
     point: Point,
@@ -93,7 +106,13 @@ def attempt_puzzle(
 
     attempts = state.increment_attempt(point.id)
 
-    if verify_answer(user_input, puzzle.answer_hash):
+    # 타입별 정답 판정
+    if puzzle.type == "key_sequence":
+        correct = verify_sequence(user_input, puzzle.keys, puzzle.sequence)
+    else:
+        correct = verify_answer(user_input, puzzle.answer_hash)
+
+    if correct:
         state.solved_puzzles.add(point.id)
         results = execute_actions(state, puzzle.on_success)
         messages = [r.message for r in results if r.message]
@@ -121,3 +140,24 @@ def can_attempt_puzzle(state: GameState, point: Point) -> tuple[bool, str]:
             return False, "시도 횟수를 초과했습니다."
 
     return True, ""
+
+
+# ---------------------------------------------------------------------------
+# NPC
+# ---------------------------------------------------------------------------
+
+def talk_to_npc(npc: "Npc", state: GameState) -> list[str]:  # type: ignore[name-defined]
+    """
+    NPC 대화 실행. 조건에 맞는 대사 목록 반환.
+    조건: line.condition이 None이거나 line.condition["flag"]의 모든 항목이 state.flags에 일치.
+    빈 목록이면 "할 말이 없는 것 같다." 반환.
+    """
+    from clue.schema.models import Npc  # 순환 방지를 위해 지역 import
+    lines: list[str] = []
+    for line in npc.lines:
+        if line.condition is None:
+            lines.append(line.text)
+        elif flag_cond := (line.condition.get("flag") or {}):
+            if all(state.flags.get(k) == v for k, v in flag_cond.items()):
+                lines.append(line.text)
+    return lines if lines else ["할 말이 없는 것 같다."]
