@@ -1,49 +1,137 @@
 // web/app/builder/page.tsx
 'use client'
 
+import { useMemo } from 'react'
 import { useBuilderStore } from '../../lib/store'
+import { validateScenario } from '../../lib/validator'
+import { ScenarioSchema } from '../../lib/schema'
+import { RoomCanvas } from '../../components/canvas/RoomCanvas'
+import { RoomDetailPanel } from '../../components/canvas/RoomDetailPanel'
+import { MetaSidebar } from '../../components/sidebar/MetaSidebar'
+import { Modal } from '../../components/ui/Modal'
+import { VerifyStep } from '../../components/steps/VerifyStep'
+import { ExportStep } from '../../components/steps/ExportStep'
+import { Button } from '../../components/ui/Button'
 
 export default function BuilderPage() {
-  const { state, hydrated, updateScenario, reset, setSelectedRoom, setOverlay } = useBuilderStore()
-  const { scenario } = state
+  const {
+    state,
+    hydrated,
+    updateScenario,
+    setNodePosition,
+    setSelectedRoom,
+    setOverlay,
+    addRoom,
+    deleteRoom,
+    reset,
+  } = useBuilderStore()
+
+  const { scenario, nodePositions, selectedRoomId, overlay } = state
+
+  // 검증 오류 수 (실시간)
+  const errorCount = useMemo(() => {
+    const parsed = ScenarioSchema.safeParse(scenario)
+    if (!parsed.success) return parsed.error.issues.length
+    return validateScenario(parsed.data).length
+  }, [scenario])
 
   if (!hydrated) return null
 
   return (
-    <main className="min-h-screen p-6 sm:p-10 max-w-3xl mx-auto">
-      <div className="mb-6 flex items-center justify-between">
-        <h1 className="text-sm text-zinc-500 font-mono">OpenClue Builder (Canvas - WIP)</h1>
-        <a href="/" className="text-xs text-zinc-600 hover:text-zinc-400">← 홈</a>
-      </div>
+    <div className="flex flex-col h-screen bg-zinc-950 overflow-hidden">
+      {/* Top Bar */}
+      <div className="flex items-center gap-3 px-4 py-2 border-b border-zinc-800 flex-shrink-0">
+        <span className="text-xs text-zinc-500 font-mono mr-2">OpenClue Builder</span>
 
-      <div className="space-y-4">
-        <div className="rounded border border-zinc-700 p-4">
-          <h2 className="font-semibold mb-2">Scenario: {scenario.title || '(untitled)'}</h2>
-          <p className="text-sm text-zinc-400">Author: {scenario.author || '(none)'}</p>
-          <p className="text-sm text-zinc-400">Rooms: {(scenario.rooms?.length ?? 0)}</p>
+        {/* 검증 뱃지 */}
+        <div className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+          errorCount === 0
+            ? 'bg-green-950 text-green-400 border border-green-800'
+            : 'bg-red-950 text-red-400 border border-red-800'
+        }`}>
+          {errorCount === 0 ? '✓ 오류 없음' : `⚠ ${errorCount}개 오류`}
         </div>
 
-        <button
+        <div className="flex-1" />
+
+        <Button
+          variant="secondary"
           onClick={() => setOverlay('verify')}
-          className="rounded bg-blue-600 hover:bg-blue-700 px-4 py-2 text-sm"
+          className="text-xs py-1 px-3"
         >
-          Verify
-        </button>
-
-        <button
+          검증
+        </Button>
+        <Button
           onClick={() => setOverlay('export')}
-          className="rounded bg-green-600 hover:bg-green-700 px-4 py-2 text-sm ml-2"
+          disabled={errorCount > 0}
+          className="text-xs py-1 px-3"
         >
-          Export
-        </button>
-
-        <button
+          내보내기
+        </Button>
+        <Button
+          variant="ghost"
           onClick={reset}
-          className="rounded bg-red-600 hover:bg-red-700 px-4 py-2 text-sm ml-2"
+          className="text-xs py-1 px-3"
         >
-          Reset
-        </button>
+          새로 만들기
+        </Button>
+        <a href="/" className="text-xs text-zinc-600 hover:text-zinc-400 ml-1">
+          ← 홈
+        </a>
       </div>
-    </main>
+
+      {/* Main Content */}
+      <div className="flex flex-1 overflow-hidden">
+        {/* Left Sidebar */}
+        <MetaSidebar scenario={scenario} onChange={updateScenario} />
+
+        {/* Canvas Area (relative for overlay positioning) */}
+        <div className="flex-1 relative">
+          <RoomCanvas
+            scenario={scenario}
+            nodePositions={nodePositions}
+            selectedRoomId={selectedRoomId}
+            onUpdateScenario={updateScenario}
+            onSetNodePosition={setNodePosition}
+            onSelectRoom={setSelectedRoom}
+            onAddRoom={addRoom}
+            onDeleteRoom={deleteRoom}
+          />
+
+          {/* Room Detail Panel (absolute, slides in from right) */}
+          {selectedRoomId && (
+            <RoomDetailPanel
+              scenario={scenario}
+              roomId={selectedRoomId}
+              onChange={updateScenario}
+              onClose={() => setSelectedRoom(null)}
+            />
+          )}
+        </div>
+      </div>
+
+      {/* Verify Modal */}
+      {overlay === 'verify' && (
+        <Modal title="시나리오 검증" onClose={() => setOverlay(null)}>
+          <VerifyStep
+            scenario={scenario}
+            onPrev={() => setOverlay(null)}
+            onNext={() => setOverlay('export')}
+            onGoToStep={(_step: number) => setOverlay(null)}
+          />
+        </Modal>
+      )}
+
+      {/* Export Modal */}
+      {overlay === 'export' && (
+        <Modal title="내보내기" onClose={() => setOverlay(null)}>
+          <ExportStep
+            scenario={scenario}
+            onPrev={() => setOverlay('verify')}
+            onReset={() => { reset(); setOverlay(null) }}
+          />
+        </Modal>
+      )}
+    </div>
   )
 }
