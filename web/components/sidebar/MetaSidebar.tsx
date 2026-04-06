@@ -4,6 +4,7 @@
 import { Input, Textarea, Label } from '../ui/Input'
 import { StarRating } from '../ui/StarRating'
 import type { Scenario, Item } from '../../lib/schema'
+import type { HubMeta } from '../../lib/projects'
 
 function toSlug(title: string): string {
   return title
@@ -26,9 +27,12 @@ function newItem(): Item {
 interface MetaSidebarProps {
   scenario: Partial<Scenario>
   onChange: (patch: Partial<Scenario>) => void
+  style?: React.CSSProperties
+  hubMeta?: HubMeta
+  onHubMetaChange?: (patch: Partial<HubMeta>) => void
 }
 
-export function MetaSidebar({ scenario, onChange }: MetaSidebarProps) {
+export function MetaSidebar({ scenario, onChange, style, hubMeta, onHubMetaChange }: MetaSidebarProps) {
   const items = scenario.items ?? []
 
   const handleTitleChange = (title: string) => {
@@ -48,7 +52,7 @@ export function MetaSidebar({ scenario, onChange }: MetaSidebarProps) {
   }
 
   return (
-    <div className="w-64 flex-shrink-0 bg-zinc-950 border-r border-zinc-800 flex flex-col overflow-y-auto">
+    <div className="flex-shrink-0 bg-zinc-950 border-r border-zinc-800 flex flex-col overflow-y-auto" style={style}>
       <div className="p-4 space-y-4">
         {/* 시나리오 메타 */}
         <div className="space-y-3">
@@ -209,6 +213,78 @@ export function MetaSidebar({ scenario, onChange }: MetaSidebarProps) {
             className="text-xs text-zinc-500 hover:text-green-400 px-2 py-1 rounded border border-dashed border-zinc-800 hover:border-green-800 w-full"
           >
             + 아이템 추가
+          </button>
+        </div>
+
+        {/* 구분선 */}
+        <div className="border-t border-zinc-800" />
+
+        {/* 허브 업로드 정보 */}
+        <div className="space-y-2">
+          <h2 className="text-xs font-medium text-zinc-400 uppercase tracking-wider">🌐 허브 정보</h2>
+          <div className="text-[10px] text-zinc-600">허브 업로드 시 사용됩니다</div>
+
+          <div>
+            <Label>개요</Label>
+            <Textarea
+              value={hubMeta?.synopsis ?? ''}
+              onChange={e => onHubMetaChange?.({ synopsis: e.target.value || undefined })}
+              placeholder="한두 줄로 시나리오를 소개하세요..."
+              className="text-xs"
+            />
+          </div>
+
+          <div>
+            <Label>태그</Label>
+            <div className="flex flex-wrap gap-1 mb-1">
+              {(hubMeta?.tags ?? []).map(tag => (
+                <span key={tag} className="bg-zinc-800 text-blue-400 text-[10px] rounded-full px-2 py-0.5 flex items-center gap-1">
+                  {tag}
+                  <button
+                    onClick={() => onHubMetaChange?.({ tags: (hubMeta?.tags ?? []).filter(t => t !== tag) })}
+                    className="hover:text-red-400"
+                  >×</button>
+                </span>
+              ))}
+            </div>
+            <input
+              className="bg-zinc-800 border border-zinc-600 rounded px-2 py-1.5 text-xs text-white w-full placeholder:text-zinc-500 focus:outline-none focus:border-green-500"
+              placeholder="태그 입력 후 Enter"
+              onKeyDown={e => {
+                if (e.key !== 'Enter') return
+                const val = (e.target as HTMLInputElement).value.trim()
+                if (!val) return
+                onHubMetaChange?.({ tags: [...new Set([...(hubMeta?.tags ?? []), val])] });
+                (e.target as HTMLInputElement).value = ''
+              }}
+            />
+          </div>
+
+          <div>
+            <Label>공개 여부</Label>
+            <div className="flex gap-2">
+              {(['public', 'private'] as const).map(v => (
+                <button
+                  key={v}
+                  onClick={() => onHubMetaChange?.({ visibility: v })}
+                  className={`flex-1 text-xs py-1 rounded border transition-colors ${
+                    (hubMeta?.visibility ?? 'private') === v
+                      ? 'bg-zinc-700 border-zinc-500 text-white'
+                      : 'bg-zinc-900 border-zinc-800 text-zinc-500 hover:text-zinc-300'
+                  }`}
+                >
+                  {v === 'public' ? '🌐 공개' : '🔒 비공개'}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <button
+            disabled
+            className="w-full text-xs py-1.5 rounded border border-zinc-700 text-zinc-600 cursor-not-allowed"
+            title="허브 완성 후 연결 예정"
+          >
+            ☁️ 허브에 업로드 (준비 중)
           </button>
         </div>
       </div>
