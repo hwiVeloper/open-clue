@@ -50,6 +50,11 @@ function RoomNodeComponent({ data }: NodeProps<Node<RoomNodeData>>) {
       <div className="text-xs text-zinc-500 mt-1">
         {room.points.length}개 포인트
       </div>
+      {(room.npcs?.length ?? 0) > 0 && (
+        <div className="text-xs text-purple-400 mt-0.5">
+          {room.npcs!.length}명 NPC
+        </div>
+      )}
 
       <div className="flex gap-1 mt-2">
         {!isStart && (

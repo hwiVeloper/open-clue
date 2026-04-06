@@ -1,7 +1,7 @@
 // web/components/sidebar/MetaSidebar.tsx
 'use client'
 
-import { Input, Label } from '../ui/Input'
+import { Input, Textarea, Label } from '../ui/Input'
 import { StarRating } from '../ui/StarRating'
 import type { Scenario, Item } from '../../lib/schema'
 
@@ -100,6 +100,24 @@ export function MetaSidebar({ scenario, onChange }: MetaSidebarProps) {
               placeholder="30"
               value={scenario.estimated_minutes ?? ''}
               onChange={e => onChange({ estimated_minutes: e.target.value ? parseInt(e.target.value) : null })}
+              className="text-xs"
+            />
+          </div>
+          <div>
+            <Label>인트로 텍스트</Label>
+            <Textarea
+              value={scenario.intro_text ?? ''}
+              onChange={e => onChange({ intro_text: e.target.value || null })}
+              placeholder="시나리오 시작 시 표시되는 배경 설명..."
+              className="text-xs"
+            />
+          </div>
+          <div>
+            <Label>아웃트로 텍스트</Label>
+            <Textarea
+              value={scenario.outro_text ?? ''}
+              onChange={e => onChange({ outro_text: e.target.value || null })}
+              placeholder="클리어 시 표시되는 엔딩 메시지..."
               className="text-xs"
             />
           </div>

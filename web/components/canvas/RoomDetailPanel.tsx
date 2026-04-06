@@ -7,6 +7,7 @@ import type { Point, Room, Scenario } from '../../lib/schema'
 import { ActionListEditor } from './ActionListEditor'
 import { PointRequirementsEditor } from './PointRequirementsEditor'
 import { PuzzleEditor } from './PuzzleEditor'
+import { NpcEditor } from './NpcEditor'
 
 interface RoomDetailPanelProps {
   scenario: Partial<Scenario>
@@ -28,6 +29,7 @@ export function RoomDetailPanel({ scenario, roomId, onChange, onClose }: RoomDet
   const rooms = scenario.rooms ?? []
   const room = rooms.find(r => r.id === roomId)
   const [expandedPoint, setExpandedPoint] = useState<string | null>(null)
+  const [tab, setTab] = useState<'points' | 'npcs'>('points')
 
   if (!room) return null
 
@@ -77,6 +79,24 @@ export function RoomDetailPanel({ scenario, roomId, onChange, onClose }: RoomDet
 
       {/* 포인트 목록 */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
+        {/* 탭 */}
+        <div className="flex gap-1 mb-3">
+          {(['points', 'npcs'] as const).map(t => (
+            <button
+              key={t}
+              onClick={() => setTab(t)}
+              className={`text-xs px-3 py-1 rounded border transition-colors ${
+                tab === t
+                  ? 'bg-zinc-800 border-zinc-600 text-white'
+                  : 'bg-transparent border-zinc-800 text-zinc-500 hover:text-zinc-300'
+              }`}
+            >
+              {t === 'points' ? `📍 조사 지점 (${room.points.length})` : `👤 NPC (${(room.npcs ?? []).length})`}
+            </button>
+          ))}
+        </div>
+
+        {tab === 'points' && (
         <div>
           <h3 className="text-xs font-medium text-zinc-400 uppercase tracking-wider mb-2">
             조사 지점
@@ -207,6 +227,15 @@ export function RoomDetailPanel({ scenario, roomId, onChange, onClose }: RoomDet
             + 지점 추가
           </button>
         </div>
+        )}
+
+        {tab === 'npcs' && (
+          <NpcEditor
+            room={room}
+            scenario={scenario}
+            onUpdateRoom={updateRoom}
+          />
+        )}
       </div>
     </div>
   )
