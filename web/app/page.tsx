@@ -6,6 +6,13 @@ import { useRouter } from 'next/navigation'
 import { Button } from '../components/ui/Button'
 import { ScenarioSchema } from '../lib/schema'
 
+const ASCII_ART = `  ___                    ____ _
+ / _ \\_ __   ___ _ __  / ___| |_   _  ___
+| | | | '_ \\/ _ \\ '_ \\| |   | | | | |/ _ \\
+| |_| | |_) | __/ | | | |___| | |_| |  __/
+ \\___/| .__/ \\___|_| |_|\\____|_|\\__,_|\\___|
+      |_|`
+
 export default function LandingPage() {
   const router = useRouter()
   const fileRef = useRef<HTMLInputElement>(null)
@@ -24,8 +31,9 @@ export default function LandingPage() {
         }
         localStorage.setItem('openclue_builder_draft', JSON.stringify({
           scenario: parsed.data,
-          currentStep: 0,
-          editingRoomId: null,
+          nodePositions: {},
+          selectedRoomId: null,
+          overlay: null,
         }))
         router.push('/builder')
       } catch {
@@ -37,14 +45,14 @@ export default function LandingPage() {
 
   return (
     <main className="min-h-screen flex flex-col items-center justify-center gap-8 p-8">
-      <div className="text-center space-y-2">
-        <pre className="text-green-400 text-xs leading-tight font-mono hidden sm:block">{`  ___                    ____ _
- / _ \\_ __   ___ _ __  / ___| |_   _  ___
-| | | | '_ \\ / _ \\ '_ \\| |   | | | | |/ _ \\
-| |_| | |_) |  __/ | | | |___| | |_| |  __/
- \\___/| .__/ \\___|_| |_|\\____|_|\\__,_|\\___|
-      |_|`}</pre>
-        <h1 className="text-2xl font-bold text-white">Scenario Builder</h1>
+      <div className="text-center space-y-3">
+        <pre
+          className="text-green-400 leading-tight hidden sm:block"
+          style={{ fontFamily: "'Courier New', Courier, monospace", fontSize: '13px' }}
+        >
+          {ASCII_ART}
+        </pre>
+        <h1 className="text-2xl font-bold text-green-400">Scenario Builder</h1>
         <p className="text-zinc-400 text-sm">방탈출 시나리오를 만들고 ZIP으로 내보내세요.</p>
       </div>
 
