@@ -79,6 +79,10 @@
 - [x] 캔버스 기반 시각적 방 편집기 구현 (React Flow ERD 스타일)
 - [x] localStorage 자동저장
 - [x] JSON 불러오기 (편집 모드)
+- [x] 더블클릭 방 생성 수정 (zoomOnDoubleClick 비활성화, screenToFlowPosition 좌표 변환)
+- [x] 퍼즐 on_success move_to 액션을 캔버스 엣지로 표시
+- [x] 퍼즐 타입 드롭다운 UI (text_input / key_sequence / timer) + 타입별 전용 필드
+- [x] 사이드바 리사이즈 핸들
 - [ ] Vercel 배포
 
 ### Milestone 2-1: Scenario Hub (Phase 2b)
@@ -120,4 +124,4 @@
 ---
 
 **작성일**: 2026-04-02
-**현재 단계**: Phase 2a - Web Builder (Canvas Editor)
+**현재 단계**: Phase 2a - Web Builder (Canvas Editor — 안정화 및 기능 확장 진행 중)

@@ -6,6 +6,16 @@
 
 ---
 
+## 캔버스 안정화 수정 (2026-04-07)
+
+설계 구현 전 캔버스 기반 기능 수정 완료:
+
+- **더블클릭 방 생성 수정**: ReactFlow의 `zoomOnDoubleClick={false}` 설정 + `useReactFlow().screenToFlowPosition`으로 정확한 좌표 변환. `ReactFlowProvider`를 builder page에 추가.
+- **puzzle on_success move_to 엣지 표시**: `computeEdges`가 `point.action`만 확인하던 것을 `point.puzzle.on_success`의 move_to 액션도 엣지로 표시하도록 수정. RoomDetailPanel과 피커 오버레이에도 동일 적용.
+- **사이드바 리사이즈**: MetaSidebar에 드래그 핸들 추가 (160px~480px).
+
+---
+
 ## 배경 및 목적
 
 현재 빌더는 방 그래프 편집, 조사 지점, 텍스트 퍼즐, 아이템, 방 이동 액션, 유효성 검사/내보내기를 지원한다.
@@ -67,6 +77,10 @@ MetaSidebar 하단에 "게임 플래그" 섹션 추가.
 
 **대상 파일:** `web/lib/schema.ts`, `web/components/canvas/RoomDetailPanel.tsx`
 
+> **구현 상태 (2026-04-07):**
+> - 2-2 퍼즐 타입 선택 UI: **구현 완료** — 드롭다운으로 text_input/key_sequence/timer 선택, 타입별 전용 필드 표시
+> - 2-1 스키마 확장 (keys/sequence 필드): 미구현 — 현재 key_sequence는 answer_hash 기반으로 동작
+
 ### 2-1. 스키마 확장
 
 `PuzzleSchema`에 `key_sequence` 타입 관련 필드 추가:
@@ -78,13 +92,13 @@ sequence: string[]   // 정답 순서 (keys 중 선택)
 
 `timer` 타입은 기존 `time_limit_seconds` 필드로 충분. 추가 스키마 변경 없음.
 
-### 2-2. 퍼즐 타입 선택 UI
+### 2-2. 퍼즐 타입 선택 UI (**완료**)
 
-퍼즐 섹션 상단에 탭형 타입 선택기 추가:
+퍼즐 섹션 상단에 드롭다운 타입 선택기:
 
-- **텍스트 입력** (`text_input`): 현재 UI 유지
-- **키 시퀀스** (`key_sequence`): 버튼 레이블 정의 → 정답 순서 구성 (버튼 클릭으로 순서에 추가, ✕로 마지막 항목 제거)
-- **타이머** (`timer`): 기존 필드에 `time_limit_seconds` 입력 추가, 시간 초과 메시지(`fail_message`) 명시
+- **텍스트 입력** (`text_input`): 질문, 정답, 힌트, 최대 시도
+- **키 시퀀스** (`key_sequence`): 질문, 정답(시퀀스 텍스트, SHA-256 해시 변환), 힌트, 최대 시도
+- **타이머** (`timer`): 질문, 정답, 힌트, 제한 시간(초) *(필수)*, 최대 시도, 시간 초과 메시지
 
 ---
 
