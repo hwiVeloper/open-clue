@@ -8,7 +8,7 @@ export const ActionSchema = z.object({
 
 export const RequirementsSchema = z.object({
   item_id: z.string().optional().nullable(),
-  flag: z.record(z.unknown()).optional().nullable(),
+  flag: z.record(z.string(), z.unknown()).optional().nullable(),
   solved_puzzle: z.string().optional().nullable(),
 })
 
@@ -56,7 +56,7 @@ export const ScenarioSchema = z.object({
   difficulty: z.number().int().min(1).max(5).optional().nullable(),
   estimated_minutes: z.number().int().positive().optional().nullable(),
   start_room_id: z.string(),
-  flags: z.record(z.unknown()).default({}),
+  flags: z.record(z.string(), z.unknown()).default({}),
   items: z.array(ItemSchema).default([]),
   rooms: z.array(RoomSchema).min(1, '방이 최소 1개 있어야 합니다.'),
 })
