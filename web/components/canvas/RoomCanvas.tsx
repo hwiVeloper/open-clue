@@ -1,7 +1,7 @@
 // web/components/canvas/RoomCanvas.tsx
 'use client'
 
-import { useCallback, useEffect } from 'react'
+import { useCallback, useEffect, useRef } from 'react'
 import {
   ReactFlow,
   Background,
@@ -16,10 +16,12 @@ import {
   type Connection,
 } from '@xyflow/react'
 import { RoomNode, type RoomNodeData } from './RoomNode'
+import { EdgeWithDelete } from './EdgeWithDelete'
 import type { Scenario, Point } from '../../lib/schema'
 import type { NodePosition } from '../../lib/store'
 
 const NODE_TYPES = { roomNode: RoomNode }
+const EDGE_TYPES = { withDelete: EdgeWithDelete }
 
 interface RoomCanvasProps {
   scenario: Partial<Scenario>
@@ -55,20 +57,28 @@ function computeNodes(
   }))
 }
 
-function computeEdges(scenario: Partial<Scenario>): Edge[] {
+function computeEdges(
+  scenario: Partial<Scenario>,
+  onDelete: (sourceRoomId: string, pointId: string) => void,
+): Edge[] {
+  const rooms = scenario.rooms ?? []
   const edges: Edge[] = []
-  for (const room of scenario.rooms ?? []) {
+  for (const room of rooms) {
     for (const point of room.points) {
       const actions = Array.isArray(point.action) ? point.action : point.action ? [point.action] : []
       for (const action of actions) {
         if (action.type === 'move_to' && action.value) {
+          const targetRoom = rooms.find(r => r.id === action.value)
           edges.push({
             id: `edge-${room.id}-${point.id}-${action.value}`,
             source: room.id,
             target: action.value as string,
-            label: point.name || '이동',
-            labelStyle: { fill: '#a1a1aa', fontSize: 11 },
-            labelBgStyle: { fill: '#18181b' },
+            type: 'withDelete',
+            data: {
+              pointName: point.name || '이동',
+              targetRoomName: targetRoom?.name || String(action.value),
+              onDelete: () => onDelete(room.id, point.id),
+            },
             markerEnd: { type: MarkerType.ArrowClosed, color: '#52525b' },
             style: { stroke: '#52525b' },
           })
@@ -92,15 +102,26 @@ export function RoomCanvas({
   const [nodes, setNodes, onNodesChange] = useNodesState<Node>([])
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([])
 
+  // 최신 scenario를 ref로 유지 — 엣지 콜백의 stale closure 방지
+  const scenarioRef = useRef(scenario)
+  scenarioRef.current = scenario
+
+  const onDeleteEdge = useCallback((sourceRoomId: string, pointId: string) => {
+    const rooms = (scenarioRef.current.rooms ?? []).map(r =>
+      r.id !== sourceRoomId ? r : { ...r, points: r.points.filter(p => p.id !== pointId) }
+    )
+    onUpdateScenario({ rooms })
+  }, [onUpdateScenario])
+
   useEffect(() => {
     setNodes(computeNodes(
       scenario, nodePositions, selectedRoomId,
       onSelectRoom, onDeleteRoom,
       (id) => onUpdateScenario({ start_room_id: id }),
     ))
-    setEdges(computeEdges(scenario))
+    setEdges(computeEdges(scenario, onDeleteEdge))
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [scenario.rooms, scenario.start_room_id, selectedRoomId, nodePositions])
+  }, [scenario.rooms, scenario.start_room_id, selectedRoomId, nodePositions, onDeleteEdge])
 
   const onNodeDragStop = useCallback((_: React.MouseEvent, node: Node) => {
     onSetNodePosition(node.id, node.position)
@@ -125,8 +146,9 @@ export function RoomCanvas({
     })
   }, [scenario.rooms, onUpdateScenario])
 
+  // Delete 키로 엣지 선택 삭제 시 대응 포인트 제거
   const onEdgesDelete = useCallback((deletedEdges: Edge[]) => {
-    let rooms = [...(scenario.rooms ?? [])]
+    let rooms = [...(scenarioRef.current.rooms ?? [])]
     for (const edge of deletedEdges) {
       const targetId = edge.target
       rooms = rooms.map(r => {
@@ -141,7 +163,7 @@ export function RoomCanvas({
       })
     }
     onUpdateScenario({ rooms })
-  }, [scenario.rooms, onUpdateScenario])
+  }, [onUpdateScenario])
 
   const onWrapperDoubleClick = useCallback((event: React.MouseEvent) => {
     // Only fire when clicking directly on the pane (not on a node)
@@ -167,6 +189,7 @@ export function RoomCanvas({
         nodes={nodes}
         edges={edges}
         nodeTypes={NODE_TYPES}
+        edgeTypes={EDGE_TYPES}
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         onNodeDragStop={onNodeDragStop}

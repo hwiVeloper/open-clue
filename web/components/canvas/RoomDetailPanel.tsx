@@ -77,24 +77,37 @@ export function RoomDetailPanel({ scenario, roomId, onChange, onClose }: RoomDet
             조사 지점
           </h3>
           <div className="space-y-2">
-            {room.points.map((point, i) => (
+            {room.points.map((point, i) => {
+              const pointAction = !Array.isArray(point.action) ? point.action : null
+              const moveToRoom = pointAction?.type === 'move_to'
+                ? rooms.find(r => r.id === pointAction.value)
+                : null
+
+              return (
               <div key={point.id} className="bg-zinc-900 border border-zinc-800 rounded">
                 <div className="flex items-center gap-2 p-2">
-                  <Input
-                    placeholder="지점 이름"
-                    value={point.name}
-                    onChange={e => updatePoint(i, { name: e.target.value })}
-                    className="flex-1 text-xs"
-                  />
+                  <div className="flex-1 min-w-0">
+                    <Input
+                      placeholder="지점 이름"
+                      value={point.name}
+                      onChange={e => updatePoint(i, { name: e.target.value })}
+                      className="text-xs w-full"
+                    />
+                    {moveToRoom && (
+                      <div className="text-[10px] text-blue-400 mt-0.5 pl-1 truncate">
+                        → {moveToRoom.name || moveToRoom.id}
+                      </div>
+                    )}
+                  </div>
                   <button
                     onClick={() => setExpandedPoint(expandedPoint === point.id ? null : point.id)}
-                    className="text-xs text-zinc-500 hover:text-zinc-300 px-1"
+                    className="text-xs text-zinc-500 hover:text-zinc-300 px-1 shrink-0"
                   >
                     {expandedPoint === point.id ? '접기' : '상세'}
                   </button>
                   <button
                     onClick={() => deletePoint(i)}
-                    className="text-zinc-600 hover:text-red-400 text-xs px-1"
+                    className="text-zinc-600 hover:text-red-400 text-xs px-1 shrink-0"
                   >
                     ✕
                   </button>
@@ -247,7 +260,8 @@ export function RoomDetailPanel({ scenario, roomId, onChange, onClose }: RoomDet
                   </div>
                 )}
               </div>
-            ))}
+            )
+          })}
           </div>
           <button
             onClick={() => updateRoom({ points: [...room.points, newPoint()] })}
