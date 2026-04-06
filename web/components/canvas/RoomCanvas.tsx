@@ -1,7 +1,7 @@
 // web/components/canvas/RoomCanvas.tsx
 'use client'
 
-import { useCallback, useEffect, useRef } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import {
   ReactFlow,
   Background,
@@ -22,6 +22,11 @@ import type { NodePosition } from '../../lib/store'
 
 const NODE_TYPES = { roomNode: RoomNode }
 const EDGE_TYPES = { withDelete: EdgeWithDelete }
+
+type PendingConnection = {
+  sourceRoomId: string
+  targetRoomId: string
+}
 
 interface RoomCanvasProps {
   scenario: Partial<Scenario>
@@ -75,7 +80,7 @@ function computeEdges(
             target: action.value as string,
             type: 'withDelete',
             data: {
-              pointName: point.name || '이동',
+              pointName: point.name || '(이름 없음)',
               targetRoomName: targetRoom?.name || String(action.value),
               onDelete: () => onDelete(room.id, point.id),
             },
@@ -101,14 +106,21 @@ export function RoomCanvas({
 }: RoomCanvasProps) {
   const [nodes, setNodes, onNodesChange] = useNodesState<Node>([])
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([])
+  const [pendingConnection, setPendingConnection] = useState<PendingConnection | null>(null)
 
-  // 최신 scenario를 ref로 유지 — 엣지 콜백의 stale closure 방지
+  // 최신 scenario를 ref로 유지 — 콜백의 stale closure 방지
   const scenarioRef = useRef(scenario)
   scenarioRef.current = scenario
 
+  // 엣지 ✕ 또는 Delete 키: move_to 액션만 제거 (포인트 자체는 유지)
   const onDeleteEdge = useCallback((sourceRoomId: string, pointId: string) => {
     const rooms = (scenarioRef.current.rooms ?? []).map(r =>
-      r.id !== sourceRoomId ? r : { ...r, points: r.points.filter(p => p.id !== pointId) }
+      r.id !== sourceRoomId ? r : {
+        ...r,
+        points: r.points.map(p =>
+          p.id !== pointId ? p : { ...p, action: null }
+        ),
+      }
     )
     onUpdateScenario({ rooms })
   }, [onUpdateScenario])
@@ -127,26 +139,14 @@ export function RoomCanvas({
     onSetNodePosition(node.id, node.position)
   }, [onSetNodePosition])
 
+  // 방 연결 드래그: 즉시 포인트 생성하지 않고 피커를 띄움
   const onConnect = useCallback((params: Connection) => {
     if (!params.source || !params.target) return
-    const rooms = scenario.rooms ?? []
-    const targetRoom = rooms.find(r => r.id === params.target)
-    if (!targetRoom) return
-    const newPoint: Point = {
-      id: `link-${params.source}-to-${params.target}-${Date.now()}`,
-      name: `${targetRoom.name}(으)로 이동`,
-      description: '',
-      hidden: false,
-      action: { type: 'move_to', value: params.target },
-    }
-    onUpdateScenario({
-      rooms: rooms.map(r =>
-        r.id === params.source ? { ...r, points: [...r.points, newPoint] } : r
-      ),
-    })
-  }, [scenario.rooms, onUpdateScenario])
+    if (params.source === params.target) return
+    setPendingConnection({ sourceRoomId: params.source, targetRoomId: params.target })
+  }, [])
 
-  // Delete 키로 엣지 선택 삭제 시 대응 포인트 제거
+  // Delete 키로 엣지 선택 삭제
   const onEdgesDelete = useCallback((deletedEdges: Edge[]) => {
     let rooms = [...(scenarioRef.current.rooms ?? [])]
     for (const edge of deletedEdges) {
@@ -155,9 +155,12 @@ export function RoomCanvas({
         if (r.id !== edge.source) return r
         return {
           ...r,
-          points: r.points.filter(p => {
+          points: r.points.map(p => {
             const actions = Array.isArray(p.action) ? p.action : p.action ? [p.action] : []
-            return !actions.some(a => a.type === 'move_to' && a.value === targetId)
+            if (actions.some(a => a.type === 'move_to' && a.value === targetId)) {
+              return { ...p, action: null }
+            }
+            return p
           }),
         }
       })
@@ -165,8 +168,41 @@ export function RoomCanvas({
     onUpdateScenario({ rooms })
   }, [onUpdateScenario])
 
+  // 피커: 기존 포인트에 move_to 할당
+  const assignMoveTo = useCallback((pointId: string) => {
+    if (!pendingConnection) return
+    const { sourceRoomId, targetRoomId } = pendingConnection
+    const rooms = (scenarioRef.current.rooms ?? []).map(r =>
+      r.id !== sourceRoomId ? r : {
+        ...r,
+        points: r.points.map(p =>
+          p.id !== pointId ? p : { ...p, action: { type: 'move_to' as const, value: targetRoomId } }
+        ),
+      }
+    )
+    onUpdateScenario({ rooms })
+    setPendingConnection(null)
+  }, [pendingConnection, onUpdateScenario])
+
+  // 피커: 새 포인트 생성 후 move_to 할당
+  const createAndAssignMoveTo = useCallback(() => {
+    if (!pendingConnection) return
+    const { sourceRoomId, targetRoomId } = pendingConnection
+    const newPoint: Point = {
+      id: `point-${Date.now()}`,
+      name: '',
+      description: '',
+      hidden: false,
+      action: { type: 'move_to', value: targetRoomId },
+    }
+    const rooms = (scenarioRef.current.rooms ?? []).map(r =>
+      r.id !== sourceRoomId ? r : { ...r, points: [...r.points, newPoint] }
+    )
+    onUpdateScenario({ rooms })
+    setPendingConnection(null)
+  }, [pendingConnection, onUpdateScenario])
+
   const onWrapperDoubleClick = useCallback((event: React.MouseEvent) => {
-    // Only fire when clicking directly on the pane (not on a node)
     const target = event.target as HTMLElement
     const isPane = target.classList.contains('react-flow__pane') ||
       target.classList.contains('react-flow__renderer')
@@ -183,6 +219,14 @@ export function RoomCanvas({
     onSelectRoom(null)
   }, [onSelectRoom])
 
+  // 피커에 필요한 정보
+  const pickerSourceRoom = pendingConnection
+    ? scenario.rooms?.find(r => r.id === pendingConnection.sourceRoomId)
+    : null
+  const pickerTargetRoom = pendingConnection
+    ? scenario.rooms?.find(r => r.id === pendingConnection.targetRoomId)
+    : null
+
   return (
     <div className="w-full h-full relative" onDoubleClick={onWrapperDoubleClick}>
       <ReactFlow
@@ -196,8 +240,8 @@ export function RoomCanvas({
         onConnect={onConnect}
         onEdgesDelete={onEdgesDelete}
         onPaneClick={onPaneClick}
-        deleteKeyCode="Delete"
         colorMode="dark"
+        deleteKeyCode="Delete"
         fitView
         fitViewOptions={{ padding: 0.3 }}
         minZoom={0.3}
@@ -211,6 +255,76 @@ export function RoomCanvas({
           style={{ background: '#18181b', border: '1px solid #3f3f46' }}
         />
       </ReactFlow>
+
+      {/* 연결 포인트 피커 */}
+      {pendingConnection && pickerSourceRoom && pickerTargetRoom && (
+        <div
+          className="absolute inset-0 flex items-center justify-center z-20 bg-black/50"
+          onClick={() => setPendingConnection(null)}
+        >
+          <div
+            className="bg-zinc-900 border border-zinc-700 rounded-lg shadow-2xl p-4 w-80"
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="mb-3">
+              <div className="text-xs text-zinc-500 mb-1">방 이동 연결</div>
+              <div className="text-sm text-white">
+                <span className="text-zinc-300">{pickerSourceRoom.name}</span>
+                <span className="text-zinc-600 mx-2">→</span>
+                <span className="text-green-400">{pickerTargetRoom.name}</span>
+              </div>
+              <div className="text-xs text-zinc-500 mt-1">어느 조사 지점에서 이동합니까?</div>
+            </div>
+
+            <div className="space-y-1 max-h-52 overflow-y-auto mb-3">
+              {pickerSourceRoom.points.map(point => {
+                const act = !Array.isArray(point.action) ? point.action : null
+                const currentMoveTo = act?.type === 'move_to'
+                  ? scenario.rooms?.find(r => r.id === act.value)
+                  : null
+                return (
+                  <button
+                    key={point.id}
+                    onClick={() => assignMoveTo(point.id)}
+                    className="w-full text-left px-3 py-2 rounded text-sm hover:bg-zinc-800 transition-colors group"
+                  >
+                    <span className="text-zinc-200 group-hover:text-white">
+                      {point.name || '(이름 없음)'}
+                    </span>
+                    {currentMoveTo && (
+                      <span className="text-xs text-zinc-600 ml-2">
+                        현재 → {currentMoveTo.name}
+                      </span>
+                    )}
+                  </button>
+                )
+              })}
+
+              {pickerSourceRoom.points.length === 0 && (
+                <div className="text-xs text-zinc-600 py-3 text-center">
+                  조사 지점이 없습니다
+                </div>
+              )}
+            </div>
+
+            <div className="border-t border-zinc-800 pt-3 flex items-center justify-between">
+              <button
+                onClick={createAndAssignMoveTo}
+                className="text-xs text-green-500 hover:text-green-400 px-2 py-1 rounded border border-dashed border-green-900 hover:border-green-700"
+              >
+                + 새 지점으로 연결
+              </button>
+              <button
+                onClick={() => setPendingConnection(null)}
+                className="text-xs text-zinc-500 hover:text-zinc-300 px-3 py-1"
+              >
+                취소
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="absolute bottom-4 left-1/2 -translate-x-1/2 text-xs text-zinc-600 pointer-events-none select-none">
         더블클릭 → 방 추가 · 핸들 드래그 → 연결 · Delete → 삭제
       </div>
