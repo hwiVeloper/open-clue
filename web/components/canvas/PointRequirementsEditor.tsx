@@ -12,6 +12,7 @@ interface PointRequirementsEditorProps {
 }
 
 const empty: Requirements = { item_id: null, flag: null, solved_puzzle: null }
+const selectCls = 'bg-zinc-800 border border-zinc-700 rounded px-2 py-1 text-xs text-white w-full'
 
 export function PointRequirementsEditor({
   value,
@@ -20,7 +21,6 @@ export function PointRequirementsEditor({
   allPointIds,
 }: PointRequirementsEditorProps) {
   const req = value ?? empty
-  const selectCls = 'bg-zinc-800 border border-zinc-700 rounded px-2 py-1 text-xs text-white w-full'
 
   const set = (patch: Partial<Requirements>) => {
     const next = { ...req, ...patch }
@@ -37,10 +37,13 @@ export function PointRequirementsEditor({
         <input
           type="checkbox"
           checked={!!req.item_id}
+          disabled={items.length === 0}
           onChange={e => set({ item_id: e.target.checked ? (items[0]?.id ?? '') : null })}
-          className="accent-red-500 shrink-0"
+          className="accent-red-500 shrink-0 disabled:opacity-40"
         />
-        <span className="text-xs text-zinc-400 shrink-0">아이템 필요</span>
+        <span className={`text-xs shrink-0 ${items.length === 0 ? 'text-zinc-600' : 'text-zinc-400'}`}>
+          아이템 필요{items.length === 0 ? ' (아이템 없음)' : ''}
+        </span>
         {req.item_id !== null && req.item_id !== undefined && (
           <select
             className={selectCls}
@@ -82,10 +85,13 @@ export function PointRequirementsEditor({
         <input
           type="checkbox"
           checked={!!req.solved_puzzle}
+          disabled={allPointIds.length === 0}
           onChange={e => set({ solved_puzzle: e.target.checked ? (allPointIds[0] ?? '') : null })}
-          className="accent-red-500 shrink-0"
+          className="accent-red-500 shrink-0 disabled:opacity-40"
         />
-        <span className="text-xs text-zinc-400 shrink-0">퍼즐 완료 후</span>
+        <span className={`text-xs shrink-0 ${allPointIds.length === 0 ? 'text-zinc-600' : 'text-zinc-400'}`}>
+          퍼즐 완료 후{allPointIds.length === 0 ? ' (퍼즐 없음)' : ''}
+        </span>
         {req.solved_puzzle !== null && req.solved_puzzle !== undefined && (
           <select
             className={selectCls}
