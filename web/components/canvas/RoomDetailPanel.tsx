@@ -175,6 +175,8 @@ export function RoomDetailPanel({ scenario, roomId, onChange, onClose }: RoomDet
                                   time_limit_seconds: null,
                                   fail_message: null,
                                   on_success: { type: 'game_clear', value: null },
+                                  keys: [],
+                                  sequence: [],
                                 }
                               : null,
                           })}

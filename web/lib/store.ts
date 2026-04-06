@@ -94,7 +94,7 @@ export function useBuilderStore() {
         ...prev.scenario,
         rooms: [
           ...(prev.scenario.rooms ?? []),
-          { id, name: '새 방', description: '', points: [] },
+          { id, name: '새 방', description: '', points: [], npcs: [] },
         ],
         start_room_id: (prev.scenario.rooms?.length ?? 0) === 0 ? id : prev.scenario.start_room_id,
       },

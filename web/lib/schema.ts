@@ -21,6 +21,23 @@ export const PuzzleSchema = z.object({
   time_limit_seconds: z.number().int().positive().optional().nullable(),
   fail_message: z.string().optional().nullable(),
   on_success: z.union([ActionSchema, z.array(ActionSchema)]),
+  // key_sequence 전용
+  keys: z.array(z.string()).default([]),
+  sequence: z.array(z.string()).default([]),
+})
+
+export const NpcLineSchema = z.object({
+  text: z.string(),
+  condition: z.object({
+    flag: z.record(z.string(), z.unknown()).optional().nullable(),
+  }).optional().nullable(),
+})
+
+export const NpcSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  description: z.string(),
+  lines: z.array(NpcLineSchema).default([]),
 })
 
 export const PointSchema = z.object({
@@ -39,6 +56,7 @@ export const RoomSchema = z.object({
   name: z.string(),
   description: z.string(),
   points: z.array(PointSchema).default([]),
+  npcs: z.array(NpcSchema).default([]),
 })
 
 export const ItemSchema = z.object({
@@ -57,6 +75,8 @@ export const ScenarioSchema = z.object({
   estimated_minutes: z.number().int().positive().optional().nullable(),
   start_room_id: z.string(),
   flags: z.record(z.string(), z.unknown()).default({}),
+  intro_text: z.string().optional().nullable(),
+  outro_text: z.string().optional().nullable(),
   items: z.array(ItemSchema).default([]),
   rooms: z.array(RoomSchema).min(1, '방이 최소 1개 있어야 합니다.'),
 })
@@ -68,3 +88,5 @@ export type Point = z.infer<typeof PointSchema>
 export type Room = z.infer<typeof RoomSchema>
 export type Item = z.infer<typeof ItemSchema>
 export type Scenario = z.infer<typeof ScenarioSchema>
+export type NpcLine = z.infer<typeof NpcLineSchema>
+export type Npc = z.infer<typeof NpcSchema>
