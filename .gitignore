@@ -6,3 +6,5 @@ build/
 .env
 *.dat
 .claude
+.worktrees/
+.superpowers/
