@@ -1,10 +1,11 @@
 // web/app/builder/page.tsx
 'use client'
 
-import { useMemo } from 'react'
+import { useMemo, useRef, useState, useCallback } from 'react'
 import { useBuilderStore } from '../../lib/store'
 import { validateScenario } from '../../lib/validator'
 import { ScenarioSchema } from '../../lib/schema'
+import { ReactFlowProvider } from '@xyflow/react'
 import { RoomCanvas } from '../../components/canvas/RoomCanvas'
 import { RoomDetailPanel } from '../../components/canvas/RoomDetailPanel'
 import { MetaSidebar } from '../../components/sidebar/MetaSidebar'
@@ -27,6 +28,31 @@ export default function BuilderPage() {
   } = useBuilderStore()
 
   const { scenario, nodePositions, selectedRoomId, overlay } = state
+
+  // 사이드바 너비 조정
+  const [sidebarWidth, setSidebarWidth] = useState(256)
+  const resizingRef = useRef(false)
+  const startXRef = useRef(0)
+  const startWidthRef = useRef(256)
+
+  const handleSidebarResizeStart = useCallback((e: React.MouseEvent) => {
+    resizingRef.current = true
+    startXRef.current = e.clientX
+    startWidthRef.current = sidebarWidth
+
+    const onMove = (ev: MouseEvent) => {
+      if (!resizingRef.current) return
+      const delta = ev.clientX - startXRef.current
+      setSidebarWidth(Math.max(160, Math.min(480, startWidthRef.current + delta)))
+    }
+    const onUp = () => {
+      resizingRef.current = false
+      window.removeEventListener('mousemove', onMove)
+      window.removeEventListener('mouseup', onUp)
+    }
+    window.addEventListener('mousemove', onMove)
+    window.addEventListener('mouseup', onUp)
+  }, [sidebarWidth])
 
   // 검증 오류 수 (실시간)
   const errorCount = useMemo(() => {
@@ -83,20 +109,28 @@ export default function BuilderPage() {
       {/* Main Content */}
       <div className="flex flex-1 overflow-hidden">
         {/* Left Sidebar */}
-        <MetaSidebar scenario={scenario} onChange={updateScenario} />
+        <MetaSidebar scenario={scenario} onChange={updateScenario} style={{ width: sidebarWidth }} />
+
+        {/* Resize Handle */}
+        <div
+          className="w-1 flex-shrink-0 cursor-col-resize bg-zinc-800 hover:bg-green-700 transition-colors duration-150 active:bg-green-600"
+          onMouseDown={handleSidebarResizeStart}
+        />
 
         {/* Canvas Area (relative for overlay positioning) */}
         <div className="flex-1 relative">
-          <RoomCanvas
-            scenario={scenario}
-            nodePositions={nodePositions}
-            selectedRoomId={selectedRoomId}
-            onUpdateScenario={updateScenario}
-            onSetNodePosition={setNodePosition}
-            onSelectRoom={setSelectedRoom}
-            onAddRoom={addRoom}
-            onDeleteRoom={deleteRoom}
-          />
+          <ReactFlowProvider>
+            <RoomCanvas
+              scenario={scenario}
+              nodePositions={nodePositions}
+              selectedRoomId={selectedRoomId}
+              onUpdateScenario={updateScenario}
+              onSetNodePosition={setNodePosition}
+              onSelectRoom={setSelectedRoom}
+              onAddRoom={addRoom}
+              onDeleteRoom={deleteRoom}
+            />
+          </ReactFlowProvider>
 
           {/* Room Detail Panel (absolute, slides in from right) */}
           {selectedRoomId && (

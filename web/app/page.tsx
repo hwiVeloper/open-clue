@@ -7,9 +7,9 @@ import { Button } from "../components/ui/Button";
 import { ScenarioSchema } from "../lib/schema";
 
 const ASCII_ART = `  ___                    ____ _
- / _ \\_ __   ___ _ __  / ___| |_   _  ___
-| | | | '_ \\/ _ \\ '_ \\| |   | | | | |/ _ \\
-| |_| | |_) | __/ | | | |___| | |_| |  __/
+ / _ \\ _ __   ___ _ __  / ___| |_   _  ___
+| | | | '_ \\ / _ \\ '_ \\| |   | | | | |/ _ \\
+| |_| | |_) |  __/ | | | |___| | |_| |  __/
  \\___/| .__/ \\___|_| |_|\\____|_|\\__,_|\\___|
       |_|`;
 
@@ -50,7 +50,7 @@ export default function LandingPage() {
     <main className="min-h-screen flex flex-col items-center justify-center gap-8 p-8">
       <div className="text-center space-y-3">
         <pre
-          className="text-green-400 hidden sm:block"
+          className="text-green-400 hidden sm:block text-left"
           style={{
             fontFamily: '"Consolas", "Courier New", Courier, monospace',
             fontSize: '14px',

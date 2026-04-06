@@ -9,6 +9,7 @@ import {
   MiniMap,
   useNodesState,
   useEdgesState,
+  useReactFlow,
   MarkerType,
   BackgroundVariant,
   type Node,
@@ -62,6 +63,16 @@ function computeNodes(
   }))
 }
 
+function collectMoveToActions(point: Point) {
+  const actions = Array.isArray(point.action) ? point.action : point.action ? [point.action] : []
+  if (point.puzzle) {
+    const onSuccess = point.puzzle.on_success
+    const puzzleActions = Array.isArray(onSuccess) ? onSuccess : onSuccess ? [onSuccess] : []
+    actions.push(...puzzleActions)
+  }
+  return actions.filter(a => a.type === 'move_to' && a.value)
+}
+
 function computeEdges(
   scenario: Partial<Scenario>,
   onDelete: (sourceRoomId: string, pointId: string) => void,
@@ -70,24 +81,21 @@ function computeEdges(
   const edges: Edge[] = []
   for (const room of rooms) {
     for (const point of room.points) {
-      const actions = Array.isArray(point.action) ? point.action : point.action ? [point.action] : []
-      for (const action of actions) {
-        if (action.type === 'move_to' && action.value) {
-          const targetRoom = rooms.find(r => r.id === action.value)
-          edges.push({
-            id: `edge-${room.id}-${point.id}-${action.value}`,
-            source: room.id,
-            target: action.value as string,
-            type: 'withDelete',
-            data: {
-              pointName: point.name || '(이름 없음)',
-              targetRoomName: targetRoom?.name || String(action.value),
-              onDelete: () => onDelete(room.id, point.id),
-            },
-            markerEnd: { type: MarkerType.ArrowClosed, color: '#52525b' },
-            style: { stroke: '#52525b' },
-          })
-        }
+      for (const action of collectMoveToActions(point)) {
+        const targetRoom = rooms.find(r => r.id === action.value)
+        edges.push({
+          id: `edge-${room.id}-${point.id}-${action.value}`,
+          source: room.id,
+          target: action.value as string,
+          type: 'withDelete',
+          data: {
+            pointName: point.name || '(이름 없음)',
+            targetRoomName: targetRoom?.name || String(action.value),
+            onDelete: () => onDelete(room.id, point.id),
+          },
+          markerEnd: { type: MarkerType.ArrowClosed, color: '#52525b' },
+          style: { stroke: '#52525b' },
+        })
       }
     }
   }
@@ -202,18 +210,12 @@ export function RoomCanvas({
     setPendingConnection(null)
   }, [pendingConnection, onUpdateScenario])
 
-  const onWrapperDoubleClick = useCallback((event: React.MouseEvent) => {
-    const target = event.target as HTMLElement
-    const isPane = target.classList.contains('react-flow__pane') ||
-      target.classList.contains('react-flow__renderer')
-    if (!isPane) return
-    const bounds = (event.currentTarget as HTMLElement).getBoundingClientRect()
-    const pos = {
-      x: event.clientX - bounds.left - 70,
-      y: event.clientY - bounds.top - 40,
-    }
-    onAddRoom(pos)
-  }, [onAddRoom])
+  const { screenToFlowPosition } = useReactFlow()
+
+  const onPaneDoubleClick = useCallback((event: React.MouseEvent) => {
+    const pos = screenToFlowPosition({ x: event.clientX, y: event.clientY })
+    onAddRoom({ x: pos.x - 70, y: pos.y - 20 })
+  }, [onAddRoom, screenToFlowPosition])
 
   const onPaneClick = useCallback(() => {
     onSelectRoom(null)
@@ -228,7 +230,7 @@ export function RoomCanvas({
     : null
 
   return (
-    <div className="w-full h-full relative" onDoubleClick={onWrapperDoubleClick}>
+    <div className="w-full h-full relative">
       <ReactFlow
         nodes={nodes}
         edges={edges}
@@ -240,6 +242,8 @@ export function RoomCanvas({
         onConnect={onConnect}
         onEdgesDelete={onEdgesDelete}
         onPaneClick={onPaneClick}
+        onDoubleClick={onPaneDoubleClick}
+        zoomOnDoubleClick={false}
         colorMode="dark"
         deleteKeyCode="Delete"
         fitView
@@ -278,9 +282,9 @@ export function RoomCanvas({
 
             <div className="space-y-1 max-h-52 overflow-y-auto mb-3">
               {pickerSourceRoom.points.map(point => {
-                const act = !Array.isArray(point.action) ? point.action : null
-                const currentMoveTo = act?.type === 'move_to'
-                  ? scenario.rooms?.find(r => r.id === act.value)
+                const moveToActions = collectMoveToActions(point)
+                const currentMoveTo = moveToActions.length > 0
+                  ? scenario.rooms?.find(r => r.id === moveToActions[0].value)
                   : null
                 return (
                   <button

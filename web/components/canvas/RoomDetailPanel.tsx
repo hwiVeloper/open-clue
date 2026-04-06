@@ -79,9 +79,15 @@ export function RoomDetailPanel({ scenario, roomId, onChange, onClose }: RoomDet
           <div className="space-y-2">
             {room.points.map((point, i) => {
               const pointAction = !Array.isArray(point.action) ? point.action : null
-              const moveToRoom = pointAction?.type === 'move_to'
-                ? rooms.find(r => r.id === pointAction.value)
+              const puzzleOnSuccess = point.puzzle?.on_success
+              const puzzleMoveToAction = puzzleOnSuccess
+                ? (Array.isArray(puzzleOnSuccess) ? puzzleOnSuccess : [puzzleOnSuccess]).find(a => a.type === 'move_to')
                 : null
+              const moveToRoom = (pointAction?.type === 'move_to'
+                ? rooms.find(r => r.id === pointAction.value)
+                : null) ?? (puzzleMoveToAction
+                ? rooms.find(r => r.id === puzzleMoveToAction.value)
+                : null)
 
               return (
               <div key={point.id} className="bg-zinc-900 border border-zinc-800 rounded">
@@ -206,12 +212,25 @@ export function RoomDetailPanel({ scenario, roomId, onChange, onClose }: RoomDet
                       </label>
                       {point.puzzle && (
                         <div className="mt-2 space-y-2 pl-3 border-l border-zinc-700">
+                          {/* 퍼즐 타입 선택 */}
+                          <div>
+                            <Label>퍼즐 타입</Label>
+                            <select
+                              className="bg-zinc-800 border border-zinc-700 rounded px-2 py-1 text-xs text-white w-full"
+                              value={point.puzzle.type}
+                              onChange={e => updatePoint(i, { puzzle: { ...point.puzzle!, type: e.target.value as 'text_input' | 'key_sequence' | 'timer' } })}
+                            >
+                              <option value="text_input">텍스트 입력</option>
+                              <option value="key_sequence">키 시퀀스</option>
+                              <option value="timer">타이머</option>
+                            </select>
+                          </div>
                           <div>
                             <Label required>퍼즐 질문</Label>
                             <Textarea
                               value={point.puzzle.question}
                               onChange={e => updatePoint(i, { puzzle: { ...point.puzzle!, question: e.target.value } })}
-                              placeholder="비밀번호는?"
+                              placeholder={point.puzzle.type === 'key_sequence' ? '올바른 순서로 버튼을 누르시오.' : point.puzzle.type === 'timer' ? '제한 시간 안에 답을 입력하시오.' : '비밀번호는?'}
                               className="text-xs"
                             />
                           </div>
@@ -220,9 +239,12 @@ export function RoomDetailPanel({ scenario, roomId, onChange, onClose }: RoomDet
                             <Input
                               value={point.puzzle.answer_hash.startsWith('plain:') ? point.puzzle.answer_hash.slice(6) : point.puzzle.answer_hash}
                               onChange={e => updatePoint(i, { puzzle: { ...point.puzzle!, answer_hash: `plain:${e.target.value}` } })}
-                              placeholder="1234"
+                              placeholder={point.puzzle.type === 'key_sequence' ? '↑↓←→' : '1234'}
                               className="text-xs"
                             />
+                            {point.puzzle.type === 'key_sequence' && (
+                              <p className="text-[10px] text-zinc-500 mt-0.5">시퀀스 정답을 텍스트로 입력 (SHA-256 해시로 변환됩니다)</p>
+                            )}
                           </div>
                           <div>
                             <Label>힌트</Label>
@@ -233,9 +255,10 @@ export function RoomDetailPanel({ scenario, roomId, onChange, onClose }: RoomDet
                               className="text-xs"
                             />
                           </div>
-                          <div>
-                            <Label>최대 시도 / 제한 시간(초)</Label>
-                            <div className="flex gap-2">
+                          {/* text_input / key_sequence: 최대 시도 */}
+                          {(point.puzzle.type === 'text_input' || point.puzzle.type === 'key_sequence') && (
+                            <div>
+                              <Label>최대 시도</Label>
                               <Input
                                 type="number"
                                 min={1}
@@ -244,16 +267,47 @@ export function RoomDetailPanel({ scenario, roomId, onChange, onClose }: RoomDet
                                 placeholder="무제한"
                                 className="text-xs"
                               />
+                            </div>
+                          )}
+                          {/* timer: 제한 시간 + 최대 시도 */}
+                          {point.puzzle.type === 'timer' && (
+                            <div>
+                              <Label required>제한 시간(초)</Label>
                               <Input
                                 type="number"
                                 min={1}
                                 value={point.puzzle.time_limit_seconds ?? ''}
                                 onChange={e => updatePoint(i, { puzzle: { ...point.puzzle!, time_limit_seconds: e.target.value ? parseInt(e.target.value) : null } })}
-                                placeholder="없음"
+                                placeholder="60"
                                 className="text-xs"
                               />
                             </div>
-                          </div>
+                          )}
+                          {point.puzzle.type === 'timer' && (
+                            <div>
+                              <Label>최대 시도</Label>
+                              <Input
+                                type="number"
+                                min={1}
+                                value={point.puzzle.max_attempts ?? ''}
+                                onChange={e => updatePoint(i, { puzzle: { ...point.puzzle!, max_attempts: e.target.value ? parseInt(e.target.value) : null } })}
+                                placeholder="무제한"
+                                className="text-xs"
+                              />
+                            </div>
+                          )}
+                          {/* timer: 실패 메시지 */}
+                          {point.puzzle.type === 'timer' && (
+                            <div>
+                              <Label>시간 초과 메시지</Label>
+                              <Input
+                                value={point.puzzle.fail_message ?? ''}
+                                onChange={e => updatePoint(i, { puzzle: { ...point.puzzle!, fail_message: e.target.value || null } })}
+                                placeholder="시간이 초과되었습니다!"
+                                className="text-xs"
+                              />
+                            </div>
+                          )}
                         </div>
                       )}
                     </div>

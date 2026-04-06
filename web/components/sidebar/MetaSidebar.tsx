@@ -26,9 +26,10 @@ function newItem(): Item {
 interface MetaSidebarProps {
   scenario: Partial<Scenario>
   onChange: (patch: Partial<Scenario>) => void
+  style?: React.CSSProperties
 }
 
-export function MetaSidebar({ scenario, onChange }: MetaSidebarProps) {
+export function MetaSidebar({ scenario, onChange, style }: MetaSidebarProps) {
   const items = scenario.items ?? []
 
   const handleTitleChange = (title: string) => {
@@ -48,7 +49,7 @@ export function MetaSidebar({ scenario, onChange }: MetaSidebarProps) {
   }
 
   return (
-    <div className="w-64 flex-shrink-0 bg-zinc-950 border-r border-zinc-800 flex flex-col overflow-y-auto">
+    <div className="flex-shrink-0 bg-zinc-950 border-r border-zinc-800 flex flex-col overflow-y-auto" style={style}>
       <div className="p-4 space-y-4">
         {/* 시나리오 메타 */}
         <div className="space-y-3">
@@ -133,7 +134,12 @@ export function MetaSidebar({ scenario, onChange }: MetaSidebarProps) {
                 placeholder="설명"
                 className="text-xs"
               />
-              <div className="text-[10px] text-zinc-600 font-mono truncate">{item.id}</div>
+              <Input
+                value={item.id}
+                onChange={e => updateItem(i, { id: e.target.value })}
+                placeholder="item-id"
+                className="text-[10px] font-mono"
+              />
             </div>
           ))}
           <button
