@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from typing import Literal
 
 Command = Literal[
-    "look", "inspect", "use", "inv", "hint", "help", "quit", "unknown"
+    "look", "inspect", "use", "inv", "hint", "help", "quit", "talk", "unknown"
 ]
 
 # 명령어 별칭 매핑
@@ -36,6 +36,10 @@ _ALIASES: dict[str, Command] = {
     "quit": "quit",
     "exit": "quit",
     "q": "quit",
+    # talk
+    "talk": "talk",
+    "t": "talk",
+    "speak": "talk",
 }
 
 
