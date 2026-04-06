@@ -87,7 +87,7 @@ function ActionRow({
           value={action.value ? JSON.stringify(action.value) : ''}
           onChange={e => {
             try { onChange({ ...action, value: JSON.parse(e.target.value) }) }
-            catch { onChange({ ...action, value: e.target.value }) }
+            catch { /* 파싱 실패 시 무시 */ }
           }}
         />
       )}

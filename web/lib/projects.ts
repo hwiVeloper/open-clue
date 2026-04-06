@@ -70,8 +70,8 @@ export async function migrateLegacyDraft(): Promise<string | null> {
     const project = newProject()
     project.scenario = parsed.scenario ?? project.scenario
     project.nodePositions = parsed.nodePositions ?? {}
+    localStorage.removeItem(LEGACY_KEY)  // remove before async save to prevent duplicates on retry
     await saveProject(project)
-    localStorage.removeItem(LEGACY_KEY)
     return project.id
   } catch {
     return null

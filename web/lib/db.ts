@@ -5,8 +5,11 @@ const DB_NAME = 'openclue'
 const DB_VERSION = 1
 const STORE = 'projects'
 
+let _db: Promise<IDBDatabase> | null = null
+
 function openDB(): Promise<IDBDatabase> {
-  return new Promise((resolve, reject) => {
+  if (_db) return _db
+  _db = new Promise((resolve, reject) => {
     const req = indexedDB.open(DB_NAME, DB_VERSION)
     req.onupgradeneeded = e => {
       const db = (e.target as IDBOpenDBRequest).result
@@ -15,8 +18,12 @@ function openDB(): Promise<IDBDatabase> {
       }
     }
     req.onsuccess = () => resolve(req.result)
-    req.onerror = () => reject(req.error)
+    req.onerror = () => {
+      _db = null  // allow retry on error
+      reject(req.error)
+    }
   })
+  return _db
 }
 
 export async function dbGetAll<T>(): Promise<T[]> {

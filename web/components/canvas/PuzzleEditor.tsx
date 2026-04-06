@@ -31,7 +31,7 @@ export function PuzzleEditor({ value, onChange, rooms, items }: PuzzleEditorProp
             key={tab.type}
             onClick={() => update({
               type: tab.type,
-              answer_hash: tab.type === 'key_sequence' ? '' : p.answer_hash,
+              answer_hash: tab.type === 'key_sequence' ? '' : (p.answer_hash || 'plain:'),
               keys: p.keys ?? [],
               sequence: p.sequence ?? [],
             })}
