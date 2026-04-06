@@ -1,6 +1,7 @@
 // web/app/layout.tsx
 import type { Metadata } from 'next'
 import './globals.css'
+import '@xyflow/react/dist/style.css'
 
 export const metadata: Metadata = {
   title: 'OpenClue Builder',
