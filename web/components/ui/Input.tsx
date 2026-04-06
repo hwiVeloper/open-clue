@@ -1,13 +1,25 @@
 import { InputHTMLAttributes, TextareaHTMLAttributes } from 'react'
 
-const base = 'bg-zinc-900 border border-zinc-700 rounded px-3 py-2 text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-green-500 w-full'
+const base = [
+  'bg-zinc-800 border border-zinc-600 rounded',
+  'px-3 py-2.5 text-sm text-white w-full',
+  'placeholder:text-zinc-500',
+  'focus:outline-none focus:border-green-500 focus:ring-1 focus:ring-green-500/20',
+  'transition-colors duration-150',
+].join(' ')
 
-export function Input(props: InputHTMLAttributes<HTMLInputElement>) {
-  return <input className={base} {...props} />
+export function Input({ className, ...props }: InputHTMLAttributes<HTMLInputElement>) {
+  return <input className={`${base} ${className ?? ''}`} {...props} />
 }
 
-export function Textarea(props: TextareaHTMLAttributes<HTMLTextAreaElement>) {
-  return <textarea className={`${base} resize-none`} rows={3} {...props} />
+export function Textarea({ className, ...props }: TextareaHTMLAttributes<HTMLTextAreaElement>) {
+  return (
+    <textarea
+      rows={4}
+      className={`${base} resize-y leading-relaxed ${className ?? ''}`}
+      {...props}
+    />
+  )
 }
 
 export function Label({ children, required }: { children: React.ReactNode; required?: boolean }) {
