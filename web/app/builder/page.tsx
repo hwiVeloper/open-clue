@@ -6,6 +6,7 @@ import { useSearchParams, useRouter } from 'next/navigation'
 import { useBuilderStore } from '../../lib/store'
 import { validateScenario } from '../../lib/validator'
 import { ScenarioSchema } from '../../lib/schema'
+import { ReactFlowProvider } from '@xyflow/react'
 import { RoomCanvas } from '../../components/canvas/RoomCanvas'
 import { RoomDetailPanel } from '../../components/canvas/RoomDetailPanel'
 import { MetaSidebar } from '../../components/sidebar/MetaSidebar'
@@ -96,6 +97,7 @@ function BuilderContent() {
 
         {/* Canvas Area (relative for overlay positioning) */}
         <div className="flex-1 relative">
+          <ReactFlowProvider>
           <RoomCanvas
             scenario={scenario}
             nodePositions={nodePositions}
@@ -106,6 +108,7 @@ function BuilderContent() {
             onAddRoom={addRoom}
             onDeleteRoom={deleteRoom}
           />
+          </ReactFlowProvider>
           {selectedRoomId && (
             <RoomDetailPanel
               scenario={scenario}
