@@ -6,6 +6,7 @@ import { Input, Textarea, Label } from '../ui/Input'
 import type { Point, Room, Scenario } from '../../lib/schema'
 import { ActionListEditor } from './ActionListEditor'
 import { PointRequirementsEditor } from './PointRequirementsEditor'
+import { PuzzleEditor } from './PuzzleEditor'
 
 interface RoomDetailPanelProps {
   scenario: Partial<Scenario>
@@ -185,65 +186,12 @@ export function RoomDetailPanel({ scenario, roomId, onChange, onClose }: RoomDet
                         퍼즐 추가
                       </label>
                       {point.puzzle && (
-                        <div className="mt-2 space-y-2 pl-3 border-l border-zinc-700">
-                          <div>
-                            <Label required>퍼즐 질문</Label>
-                            <Textarea
-                              value={point.puzzle.question}
-                              onChange={e => updatePoint(i, { puzzle: { ...point.puzzle!, question: e.target.value } })}
-                              placeholder="비밀번호는?"
-                              className="text-xs"
-                            />
-                          </div>
-                          <div>
-                            <Label required>정답</Label>
-                            <Input
-                              value={point.puzzle.answer_hash.startsWith('plain:') ? point.puzzle.answer_hash.slice(6) : point.puzzle.answer_hash}
-                              onChange={e => updatePoint(i, { puzzle: { ...point.puzzle!, answer_hash: `plain:${e.target.value}` } })}
-                              placeholder="1234"
-                              className="text-xs"
-                            />
-                          </div>
-                          <div>
-                            <Label>힌트</Label>
-                            <Input
-                              value={point.puzzle.hint ?? ''}
-                              onChange={e => updatePoint(i, { puzzle: { ...point.puzzle!, hint: e.target.value } })}
-                              placeholder="숫자 4자리..."
-                              className="text-xs"
-                            />
-                          </div>
-                          <div>
-                            <Label>최대 시도 / 제한 시간(초)</Label>
-                            <div className="flex gap-2">
-                              <Input
-                                type="number"
-                                min={1}
-                                value={point.puzzle.max_attempts ?? ''}
-                                onChange={e => updatePoint(i, { puzzle: { ...point.puzzle!, max_attempts: e.target.value ? parseInt(e.target.value) : null } })}
-                                placeholder="무제한"
-                                className="text-xs"
-                              />
-                              <Input
-                                type="number"
-                                min={1}
-                                value={point.puzzle.time_limit_seconds ?? ''}
-                                onChange={e => updatePoint(i, { puzzle: { ...point.puzzle!, time_limit_seconds: e.target.value ? parseInt(e.target.value) : null } })}
-                                placeholder="없음"
-                                className="text-xs"
-                              />
-                            </div>
-                          </div>
-                          <div>
-                            <Label required>성공 시 액션</Label>
-                            <ActionListEditor
-                              value={point.puzzle.on_success}
-                              onChange={v => updatePoint(i, { puzzle: { ...point.puzzle!, on_success: v ?? { type: 'game_clear', value: null } } })}
-                              rooms={rooms.filter(r => r.id !== roomId)}
-                              items={items}
-                            />
-                          </div>
-                        </div>
+                        <PuzzleEditor
+                          value={point.puzzle}
+                          onChange={puz => updatePoint(i, { puzzle: puz })}
+                          rooms={rooms.filter(r => r.id !== roomId)}
+                          items={items}
+                        />
                       )}
                     </div>
                   </div>
