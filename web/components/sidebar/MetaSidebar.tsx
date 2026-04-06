@@ -108,6 +108,56 @@ export function MetaSidebar({ scenario, onChange }: MetaSidebarProps) {
         {/* 구분선 */}
         <div className="border-t border-zinc-800" />
 
+        {/* 플래그 초기값 */}
+        <div className="space-y-2">
+          <h2 className="text-xs font-medium text-zinc-400 uppercase tracking-wider">게임 플래그</h2>
+          <div className="text-[10px] text-zinc-600">시나리오 시작 시 초기값</div>
+          {Object.entries(scenario.flags ?? {}).map(([key, val]) => (
+            <div key={key} className="flex gap-1 items-center">
+              <Input
+                value={key}
+                onChange={e => {
+                  const flags = { ...(scenario.flags ?? {}) }
+                  delete flags[key]
+                  flags[e.target.value] = val
+                  onChange({ flags })
+                }}
+                placeholder="flag_key"
+                className="text-[10px] font-mono flex-1"
+              />
+              <Input
+                value={String(val)}
+                onChange={e => {
+                  let parsed: unknown = e.target.value
+                  if (e.target.value === 'true') parsed = true
+                  else if (e.target.value === 'false') parsed = false
+                  else if (!isNaN(Number(e.target.value)) && e.target.value !== '') parsed = Number(e.target.value)
+                  onChange({ flags: { ...(scenario.flags ?? {}), [key]: parsed } })
+                }}
+                placeholder="true / false / 값"
+                className="text-[10px] font-mono flex-1"
+              />
+              <button
+                onClick={() => {
+                  const flags = { ...(scenario.flags ?? {}) }
+                  delete flags[key]
+                  onChange({ flags })
+                }}
+                className="text-zinc-600 hover:text-red-400 text-xs px-1"
+              >✕</button>
+            </div>
+          ))}
+          <button
+            onClick={() => onChange({ flags: { ...(scenario.flags ?? {}), [`flag_${Date.now()}`]: false } })}
+            className="text-xs text-zinc-500 hover:text-purple-400 px-2 py-1 rounded border border-dashed border-zinc-800 hover:border-purple-800 w-full"
+          >
+            + 플래그 추가
+          </button>
+        </div>
+
+        {/* 구분선 */}
+        <div className="border-t border-zinc-800" />
+
         {/* 아이템 */}
         <div className="space-y-2">
           <h2 className="text-xs font-medium text-zinc-400 uppercase tracking-wider">아이템</h2>

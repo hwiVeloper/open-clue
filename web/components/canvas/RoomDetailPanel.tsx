@@ -3,7 +3,9 @@
 
 import { useState } from 'react'
 import { Input, Textarea, Label } from '../ui/Input'
-import type { Point, Room, Scenario, Action } from '../../lib/schema'
+import type { Point, Room, Scenario } from '../../lib/schema'
+import { ActionListEditor } from './ActionListEditor'
+import { PointRequirementsEditor } from './PointRequirementsEditor'
 
 interface RoomDetailPanelProps {
   scenario: Partial<Scenario>
@@ -42,6 +44,8 @@ export function RoomDetailPanel({ scenario, roomId, onChange, onClose }: RoomDet
   }
 
   const items = scenario.items ?? []
+  // 다른 방 포함 모든 포인트 ID (solved_puzzle 드롭다운용)
+  const allPointIds = (scenario.rooms ?? []).flatMap(r => r.points.map(p => p.id))
 
   return (
     <div className="absolute top-0 right-0 h-full w-[380px] bg-zinc-950 border-l border-zinc-800 flex flex-col z-10 shadow-2xl">
@@ -133,54 +137,28 @@ export function RoomDetailPanel({ scenario, roomId, onChange, onClose }: RoomDet
                         className="text-xs"
                       />
                     </div>
+                    {/* 잠금 조건 */}
+                    <div>
+                      <Label>잠금 조건</Label>
+                      <PointRequirementsEditor
+                        value={point.requirements}
+                        onChange={v => updatePoint(i, { requirements: v })}
+                        items={items}
+                        allPointIds={allPointIds.filter(id => id !== point.id)}
+                      />
+                    </div>
+
+                    {/* 복합 액션 */}
                     <div>
                       <Label>액션</Label>
-                      <select
-                        className="bg-zinc-800 border border-zinc-700 rounded px-2 py-1 text-xs text-white w-full"
-                        value={point.action
-                          ? (Array.isArray(point.action) ? point.action[0]?.type : point.action.type) ?? ''
-                          : ''}
-                        onChange={e => {
-                          const t = e.target.value as Action['type']
-                          if (!t) { updatePoint(i, { action: null }); return }
-                          updatePoint(i, { action: { type: t, value: null } })
-                        }}
-                      >
-                        <option value="">없음</option>
-                        <option value="get_item">아이템 획득</option>
-                        <option value="move_to">방 이동</option>
-                        <option value="set_flag">플래그 설정</option>
-                        <option value="game_clear">게임 클리어</option>
-                      </select>
+                      <ActionListEditor
+                        value={point.action}
+                        onChange={v => updatePoint(i, { action: v })}
+                        rooms={rooms.filter(r => r.id !== roomId)}
+                        items={items}
+                      />
                     </div>
-                    {!Array.isArray(point.action) && point.action?.type === 'move_to' && (
-                      <div>
-                        <Label>이동할 방</Label>
-                        <select
-                          className="bg-zinc-800 border border-zinc-700 rounded px-2 py-1 text-xs text-white w-full"
-                          value={(point.action.value as string) ?? ''}
-                          onChange={e => updatePoint(i, { action: { type: 'move_to', value: e.target.value } })}
-                        >
-                          <option value="">방 선택...</option>
-                          {rooms.filter(r => r.id !== roomId).map(r => (
-                            <option key={r.id} value={r.id}>{r.name || r.id}</option>
-                          ))}
-                        </select>
-                      </div>
-                    )}
-                    {!Array.isArray(point.action) && point.action?.type === 'get_item' && (
-                      <div>
-                        <Label>아이템</Label>
-                        <select
-                          className="bg-zinc-800 border border-zinc-700 rounded px-2 py-1 text-xs text-white w-full"
-                          value={(point.action.value as string) ?? ''}
-                          onChange={e => updatePoint(i, { action: { type: 'get_item', value: e.target.value } })}
-                        >
-                          <option value="">아이템 선택...</option>
-                          {items.map(it => <option key={it.id} value={it.id}>{it.name}</option>)}
-                        </select>
-                      </div>
-                    )}
+
                     <div>
                       <label className="flex items-center gap-2 text-xs text-zinc-400 cursor-pointer">
                         <input
@@ -253,6 +231,15 @@ export function RoomDetailPanel({ scenario, roomId, onChange, onClose }: RoomDet
                                 className="text-xs"
                               />
                             </div>
+                          </div>
+                          <div>
+                            <Label required>성공 시 액션</Label>
+                            <ActionListEditor
+                              value={point.puzzle.on_success}
+                              onChange={v => updatePoint(i, { puzzle: { ...point.puzzle!, on_success: v ?? { type: 'game_clear', value: null } } })}
+                              rooms={rooms.filter(r => r.id !== roomId)}
+                              items={items}
+                            />
                           </div>
                         </div>
                       )}
