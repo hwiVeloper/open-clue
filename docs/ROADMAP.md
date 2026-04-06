@@ -67,14 +67,29 @@
 
 ## Phase 2: Online Scenario Hub
 
-> 시나리오를 온라인에서 내려받아 즉시 플레이할 수 있는 기능 추가.
+> 시나리오를 웹에서 제작하고, 업로드·공유·다운로드하는 플랫폼.
 
-- [ ] GitHub Releases 또는 S3 기반 시나리오 저장소 구축
-- [ ] `clue list` - 공개 시나리오 목록 조회
-- [ ] `clue download <scenario_id>` - 시나리오 다운로드
-- [ ] `clue play <scenario_id>` - 다운로드 없이 바로 실행 (스트리밍)
+### Milestone 2-0: 시나리오 웹 빌더 (Phase 2a)
+
+- [x] Next.js 16 프로젝트 세팅 (`web/` 디렉토리)
+- [x] Zod 스키마 정의 (`models.py` 포팅)
+- [x] `validator.ts` 구현 (`validator.py` 포팅, dead-end 탐지 포함)
+- [x] `cipher.ts` 구현 (Web Crypto API AES-256-GCM)
+- [x] `zip.ts` 구현 (fflate, JSON + DAT → `{제목}.zip`)
+- [x] 5단계 위자드 UI 구현
+- [x] localStorage 자동저장
+- [x] JSON 불러오기 (편집 모드)
+- [ ] Vercel 배포
+
+### Milestone 2-1: Scenario Hub (Phase 2b)
+
+- [ ] Hub 백엔드 API 설계 (업로드/검색/다운로드)
+- [ ] 시나리오 메타데이터 DB
+- [ ] 웹 빌더에서 Hub 업로드 연동
+- [ ] `clue list` — 공개 시나리오 목록 조회
+- [ ] `clue download <scenario_id>` — 시나리오 다운로드
+- [ ] `clue play <scenario_id>` — 다운로드 없이 바로 실행
 - [ ] 버전 체크 및 자동 업데이트 알림
-- [ ] 시나리오 메타데이터 API (제목, 난이도, 제작자, 플레이 수)
 
 ---
 
