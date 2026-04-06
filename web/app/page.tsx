@@ -50,10 +50,12 @@ export default function LandingPage() {
     <main className="min-h-screen flex flex-col items-center justify-center gap-8 p-8">
       <div className="text-center space-y-3">
         <pre
-          className="text-green-400 leading-tight hidden sm:block"
+          className="text-green-400 hidden sm:block"
           style={{
-            fontFamily: "'Courier New', Courier, monospace",
-            fontSize: "13px",
+            fontFamily: '"Consolas", "Courier New", Courier, monospace',
+            fontSize: '14px',
+            lineHeight: '1.2',
+            letterSpacing: '0',
           }}
         >
           {ASCII_ART}
