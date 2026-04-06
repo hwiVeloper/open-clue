@@ -35,6 +35,8 @@ def validate_scenario(scenario: Scenario) -> list[str]:
         )
 
     seen_point_ids: set[str] = set()
+    seen_npc_ids: set[str] = set()
+    flag_keys = set(scenario.flags.keys())
     has_game_clear = False
 
     for room in scenario.rooms:
@@ -68,6 +70,34 @@ def validate_scenario(scenario: Scenario) -> list[str]:
                     )
                     if action.type == "game_clear":
                         has_game_clear = True
+                # key_sequence 전용 검증
+                if point.puzzle.type == "key_sequence":
+                    if not point.puzzle.keys:
+                        errors.append(
+                            f"포인트 '{point.id}' key_sequence 퍼즐에 keys가 없습니다."
+                        )
+                    if not point.puzzle.sequence:
+                        errors.append(
+                            f"포인트 '{point.id}' key_sequence 퍼즐에 sequence가 없습니다."
+                        )
+                    key_set = set(point.puzzle.keys)
+                    for s in point.puzzle.sequence:
+                        if s not in key_set:
+                            errors.append(
+                                f"포인트 '{point.id}' sequence 항목 '{s}'이(가) keys에 없습니다."
+                            )
+
+        for npc in room.npcs:
+            if npc.id in seen_npc_ids:
+                errors.append(f"NPC ID '{npc.id}'가 중복됩니다.")
+            seen_npc_ids.add(npc.id)
+            for line in npc.lines:
+                if line.condition and line.condition.get("flag"):
+                    for fk in line.condition["flag"]:
+                        if fk not in flag_keys:
+                            errors.append(
+                                f"NPC '{npc.id}' 대사 조건 플래그 '{fk}'가 scenario.flags에 없습니다."
+                            )
 
     # game_clear 액션 최소 1개
     if not has_game_clear:

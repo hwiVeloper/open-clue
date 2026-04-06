@@ -35,6 +35,9 @@ class Puzzle(BaseModel):
     max_attempts: int | None = None
     time_limit_seconds: int | None = None
     fail_message: str | None = None
+    # key_sequence 전용
+    keys: list[str] = Field(default_factory=list)
+    sequence: list[str] = Field(default_factory=list)
     on_success: Union[Action, list[Action]]
 
 
@@ -54,6 +57,21 @@ class Point(BaseModel):
 
 
 # ---------------------------------------------------------------------------
+# NPC
+# ---------------------------------------------------------------------------
+
+class NpcLine(BaseModel):
+    text: str
+    condition: dict | None = None  # {"flag": {"key": value}}
+
+class Npc(BaseModel):
+    id: str
+    name: str
+    description: str
+    lines: list[NpcLine] = Field(default_factory=list)
+
+
+# ---------------------------------------------------------------------------
 # Room
 # ---------------------------------------------------------------------------
 
@@ -62,6 +80,7 @@ class Room(BaseModel):
     name: str
     description: str
     points: list[Point] = Field(default_factory=list)
+    npcs: list[Npc] = Field(default_factory=list)
 
 
 # ---------------------------------------------------------------------------
@@ -88,6 +107,8 @@ class Scenario(BaseModel):
     estimated_minutes: int | None = None
     start_room_id: str
     flags: dict[str, Any] = Field(default_factory=dict)
+    intro_text: str | None = None
+    outro_text: str | None = None
     items: list[Item] = Field(default_factory=list)
     rooms: list[Room]
 

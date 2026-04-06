@@ -203,3 +203,80 @@ def test_can_attempt_puzzle_ok():
     point = _point_with_puzzle("1234", max_attempts=3)
     can, _ = mechanics.can_attempt_puzzle(state, point)
     assert can is True
+
+
+# ── key_sequence 퍼즐 ────────────────────────────────────────────────────────
+
+def _make_key_sequence_point(puzzle_id="pt-seq"):
+    from clue.schema.models import Point, Puzzle
+    return Point(
+        id=puzzle_id,
+        name="버튼판",
+        description="버튼이 있다",
+        puzzle=Puzzle(
+            type="key_sequence",
+            question="순서대로 누르세요",
+            answer_hash="",  # key_sequence는 hash 불필요
+            keys=["↑", "↓", "←", "→"],
+            sequence=["↑", "←", "↑"],
+            on_success={"type": "game_clear", "value": None},
+        ),
+    )
+
+
+def test_key_sequence_correct(make_state):
+    state = make_state()
+    point = _make_key_sequence_point()
+    ok, msg = mechanics.attempt_puzzle(state, point, "1 3 1")  # ↑=1, ←=3
+    assert ok is True
+
+
+def test_key_sequence_wrong(make_state):
+    state = make_state()
+    point = _make_key_sequence_point()
+    ok, msg = mechanics.attempt_puzzle(state, point, "1 2 1")  # ↓ 대신 ←
+    assert ok is False
+
+
+def test_key_sequence_invalid_input(make_state):
+    state = make_state()
+    point = _make_key_sequence_point()
+    ok, msg = mechanics.attempt_puzzle(state, point, "abc")
+    assert ok is False
+
+
+# ── NPC 대화 ─────────────────────────────────────────────────────────────────
+
+def test_talk_to_npc_unconditional(make_state):
+    from clue.schema.models import Npc, NpcLine
+    from clue.engine.mechanics import talk_to_npc
+    npc = Npc(id="npc-1", name="박사", description="노인", lines=[
+        NpcLine(text="안녕하세요.", condition=None),
+    ])
+    state = make_state()
+    lines = talk_to_npc(npc, state)
+    assert lines == ["안녕하세요."]
+
+
+def test_talk_to_npc_flag_condition_met(make_state):
+    from clue.schema.models import Npc, NpcLine
+    from clue.engine.mechanics import talk_to_npc
+    npc = Npc(id="npc-1", name="박사", description="노인", lines=[
+        NpcLine(text="문이 열렸군요.", condition={"flag": {"door_open": True}}),
+    ])
+    state = make_state()
+    state.flags["door_open"] = True
+    lines = talk_to_npc(npc, state)
+    assert lines == ["문이 열렸군요."]
+
+
+def test_talk_to_npc_flag_condition_not_met(make_state):
+    from clue.schema.models import Npc, NpcLine
+    from clue.engine.mechanics import talk_to_npc
+    npc = Npc(id="npc-1", name="박사", description="노인", lines=[
+        NpcLine(text="문이 열렸군요.", condition={"flag": {"door_open": True}}),
+    ])
+    state = make_state()
+    state.flags["door_open"] = False
+    lines = talk_to_npc(npc, state)
+    assert lines == ["할 말이 없는 것 같다."]

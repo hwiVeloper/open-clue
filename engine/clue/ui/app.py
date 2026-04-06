@@ -466,6 +466,9 @@ class GameScreen(Screen):
     def on_mount(self) -> None:
         self._refresh_room()
         self._log("게임을 시작합니다. look 으로 주변을 살펴보세요.", "log-info")
+        # 인트로 텍스트 표시
+        if self._state.scenario.intro_text:
+            self._log(self._state.scenario.intro_text, "log-info")
         cmd_input = self.query_one("#cmd-input", Input)
         cmd_input.cursor_blink = False
         cmd_input.focus()
@@ -537,6 +540,19 @@ class GameScreen(Screen):
             elif not point.observation:
                 self._log("특별한 것을 발견하지 못했습니다.", "log-normal")
 
+        elif cmd.command == "talk":
+            self._log(f"> {raw}", "log-normal")
+            if not cmd.target:
+                self._log("누구와 대화할까요? 예: talk 박사", "log-error")
+            else:
+                npc = self._state.get_npc_in_room(cmd.target)
+                if npc is None:
+                    self._log(f"'{cmd.target}'을(를) 찾을 수 없습니다.", "log-error")
+                else:
+                    self._log(f"[{npc.name}]", "log-puzzle")
+                    for line in mechanics.talk_to_npc(npc, self._state):
+                        self._log(f'  "{line}"', "log-normal")
+
         elif cmd.command == "use":
             self._log(f"> {raw}", "log-normal")
             if not cmd.target:
@@ -570,7 +586,7 @@ class GameScreen(Screen):
 
         elif cmd.command == "help":
             self._log(f"> {raw}", "log-normal")
-            self._log("look | inspect <id> | use <id> | inv | hint | quit", "log-info")
+            self._log("look | inspect <id> | use <id> | inv | hint | talk <이름> | quit", "log-info")
 
         elif cmd.command == "quit":
             self.app.exit()
@@ -585,6 +601,15 @@ class GameScreen(Screen):
         self._log("[ 퍼즐 ]", "log-puzzle")
         for line in question.splitlines():
             self._log(line, "log-puzzle")
+        # key_sequence 타입 힌트
+        puzzle_point = self._state.get_point_in_room(point_id)
+        if puzzle_point and puzzle_point.puzzle:
+            if puzzle_point.puzzle.type == "key_sequence":
+                keys_display = "  ".join(
+                    f"[{i+1}:{k}]" for i, k in enumerate(puzzle_point.puzzle.keys)
+                )
+                self._log(f"버튼: {keys_display}", "log-info")
+                self._log("번호를 공백으로 구분해 입력하세요. 예: 1 3 2", "log-info")
         if time_limit:
             self._puzzle_time_limit = time_limit
             self._puzzle_time_remaining = time_limit
@@ -667,6 +692,14 @@ class GameScreen(Screen):
                 lines.append(f"  - {p.name}  ({p.id})  [완료]")
             else:
                 lines.append(f"  - {p.name}  ({p.id})")
+        # NPC 목록 추가
+        npcs = self._state.visible_npcs()
+        if npcs:
+            lines.append("")
+            lines.append("  [ NPC ]")
+            for npc in npcs:
+                lines.append(f"  👤 {npc.name} — {npc.description}")
+            lines.append('  (talk <이름>으로 대화)')
         self.query_one("#points-list", Static).update("\n".join(lines) if lines else "  (없음)")
 
     def _refresh_inventory(self) -> None:
@@ -714,6 +747,9 @@ class GameScreen(Screen):
 
     # ------------------------------------------------------------------ clear
     def _show_clear(self) -> None:
+        # 아웃트로 텍스트 표시
+        if self._state.scenario.outro_text:
+            self._log(self._state.scenario.outro_text, "log-info")
         elapsed = datetime.now() - self._state.start_time
         total = int(elapsed.total_seconds())
         m, s = divmod(total, 60)

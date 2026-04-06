@@ -191,3 +191,67 @@ def test_reachable_room_no_dead_end_error():
     errors = validate_scenario(scenario)
     dead_end_errors = [e for e in errors if "고립" in e]
     assert dead_end_errors == []
+
+
+# ── key_sequence 검증 ────────────────────────────────────────────────────────
+
+def test_key_sequence_missing_keys(base_scenario):
+    from clue.schema.models import Point, Puzzle, Room
+    s = base_scenario()
+    s.rooms[0].points.append(Point(
+        id="pt-seq",
+        name="버튼판",
+        description="버튼",
+        puzzle=Puzzle(
+            type="key_sequence",
+            question="순서대로",
+            answer_hash="",
+            keys=[],         # 비어있음
+            sequence=["↑"],
+            on_success={"type": "game_clear", "value": None},
+        ),
+    ))
+    errors = validate_scenario(s)
+    assert any("keys" in e for e in errors)
+
+
+def test_key_sequence_sequence_item_not_in_keys(base_scenario):
+    from clue.schema.models import Point, Puzzle
+    s = base_scenario()
+    s.rooms[0].points.append(Point(
+        id="pt-seq",
+        name="버튼판",
+        description="버튼",
+        puzzle=Puzzle(
+            type="key_sequence",
+            question="순서대로",
+            answer_hash="",
+            keys=["↑", "↓"],
+            sequence=["←"],  # keys에 없는 값
+            on_success={"type": "game_clear", "value": None},
+        ),
+    ))
+    errors = validate_scenario(s)
+    assert any("sequence" in e for e in errors)
+
+
+# ── NPC 검증 ─────────────────────────────────────────────────────────────────
+
+def test_duplicate_npc_id(base_scenario):
+    from clue.schema.models import Npc, NpcLine
+    s = base_scenario()
+    npc = Npc(id="npc-1", name="박사", description="노인", lines=[NpcLine(text="안녕")])
+    s.rooms[0].npcs = [npc, npc]  # 동일 ID 두 번
+    errors = validate_scenario(s)
+    assert any("NPC ID" in e for e in errors)
+
+
+def test_npc_line_condition_flag_not_in_flags(base_scenario):
+    from clue.schema.models import Npc, NpcLine
+    s = base_scenario()
+    s.rooms[0].npcs = [Npc(
+        id="npc-1", name="박사", description="노인",
+        lines=[NpcLine(text="hi", condition={"flag": {"unknown_flag": True}})],
+    )]
+    errors = validate_scenario(s)
+    assert any("unknown_flag" in e for e in errors)

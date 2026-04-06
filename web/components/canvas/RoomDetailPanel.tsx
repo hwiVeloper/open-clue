@@ -3,7 +3,11 @@
 
 import { useState } from 'react'
 import { Input, Textarea, Label } from '../ui/Input'
-import type { Point, Room, Scenario, Action } from '../../lib/schema'
+import type { Point, Room, Scenario } from '../../lib/schema'
+import { ActionListEditor } from './ActionListEditor'
+import { PointRequirementsEditor } from './PointRequirementsEditor'
+import { PuzzleEditor } from './PuzzleEditor'
+import { NpcEditor } from './NpcEditor'
 
 interface RoomDetailPanelProps {
   scenario: Partial<Scenario>
@@ -25,6 +29,7 @@ export function RoomDetailPanel({ scenario, roomId, onChange, onClose }: RoomDet
   const rooms = scenario.rooms ?? []
   const room = rooms.find(r => r.id === roomId)
   const [expandedPoint, setExpandedPoint] = useState<string | null>(null)
+  const [tab, setTab] = useState<'points' | 'npcs'>('points')
 
   if (!room) return null
 
@@ -42,6 +47,8 @@ export function RoomDetailPanel({ scenario, roomId, onChange, onClose }: RoomDet
   }
 
   const items = scenario.items ?? []
+  // 다른 방 포함 모든 포인트 ID (solved_puzzle 드롭다운용)
+  const allPointIds = (scenario.rooms ?? []).flatMap(r => r.points.map(p => p.id))
 
   return (
     <div className="absolute top-0 right-0 h-full w-[380px] bg-zinc-950 border-l border-zinc-800 flex flex-col z-10 shadow-2xl">
@@ -72,6 +79,24 @@ export function RoomDetailPanel({ scenario, roomId, onChange, onClose }: RoomDet
 
       {/* 포인트 목록 */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
+        {/* 탭 */}
+        <div className="flex gap-1 mb-3">
+          {(['points', 'npcs'] as const).map(t => (
+            <button
+              key={t}
+              onClick={() => setTab(t)}
+              className={`text-xs px-3 py-1 rounded border transition-colors ${
+                tab === t
+                  ? 'bg-zinc-800 border-zinc-600 text-white'
+                  : 'bg-transparent border-zinc-800 text-zinc-500 hover:text-zinc-300'
+              }`}
+            >
+              {t === 'points' ? `📍 조사 지점 (${room.points.length})` : `👤 NPC (${(room.npcs ?? []).length})`}
+            </button>
+          ))}
+        </div>
+
+        {tab === 'points' && (
         <div>
           <h3 className="text-xs font-medium text-zinc-400 uppercase tracking-wider mb-2">
             조사 지점
@@ -139,54 +164,28 @@ export function RoomDetailPanel({ scenario, roomId, onChange, onClose }: RoomDet
                         className="text-xs"
                       />
                     </div>
+                    {/* 잠금 조건 */}
+                    <div>
+                      <Label>잠금 조건</Label>
+                      <PointRequirementsEditor
+                        value={point.requirements}
+                        onChange={v => updatePoint(i, { requirements: v })}
+                        items={items}
+                        allPointIds={allPointIds.filter(id => id !== point.id)}
+                      />
+                    </div>
+
+                    {/* 복합 액션 */}
                     <div>
                       <Label>액션</Label>
-                      <select
-                        className="bg-zinc-800 border border-zinc-700 rounded px-2 py-1 text-xs text-white w-full"
-                        value={point.action
-                          ? (Array.isArray(point.action) ? point.action[0]?.type : point.action.type) ?? ''
-                          : ''}
-                        onChange={e => {
-                          const t = e.target.value as Action['type']
-                          if (!t) { updatePoint(i, { action: null }); return }
-                          updatePoint(i, { action: { type: t, value: null } })
-                        }}
-                      >
-                        <option value="">없음</option>
-                        <option value="get_item">아이템 획득</option>
-                        <option value="move_to">방 이동</option>
-                        <option value="set_flag">플래그 설정</option>
-                        <option value="game_clear">게임 클리어</option>
-                      </select>
+                      <ActionListEditor
+                        value={point.action}
+                        onChange={v => updatePoint(i, { action: v })}
+                        rooms={rooms.filter(r => r.id !== roomId)}
+                        items={items}
+                      />
                     </div>
-                    {!Array.isArray(point.action) && point.action?.type === 'move_to' && (
-                      <div>
-                        <Label>이동할 방</Label>
-                        <select
-                          className="bg-zinc-800 border border-zinc-700 rounded px-2 py-1 text-xs text-white w-full"
-                          value={(point.action.value as string) ?? ''}
-                          onChange={e => updatePoint(i, { action: { type: 'move_to', value: e.target.value } })}
-                        >
-                          <option value="">방 선택...</option>
-                          {rooms.filter(r => r.id !== roomId).map(r => (
-                            <option key={r.id} value={r.id}>{r.name || r.id}</option>
-                          ))}
-                        </select>
-                      </div>
-                    )}
-                    {!Array.isArray(point.action) && point.action?.type === 'get_item' && (
-                      <div>
-                        <Label>아이템</Label>
-                        <select
-                          className="bg-zinc-800 border border-zinc-700 rounded px-2 py-1 text-xs text-white w-full"
-                          value={(point.action.value as string) ?? ''}
-                          onChange={e => updatePoint(i, { action: { type: 'get_item', value: e.target.value } })}
-                        >
-                          <option value="">아이템 선택...</option>
-                          {items.map(it => <option key={it.id} value={it.id}>{it.name}</option>)}
-                        </select>
-                      </div>
-                    )}
+
                     <div>
                       <label className="flex items-center gap-2 text-xs text-zinc-400 cursor-pointer">
                         <input
@@ -203,6 +202,8 @@ export function RoomDetailPanel({ scenario, roomId, onChange, onClose }: RoomDet
                                   time_limit_seconds: null,
                                   fail_message: null,
                                   on_success: { type: 'game_clear', value: null },
+                                  keys: [],
+                                  sequence: [],
                                 }
                               : null,
                           })}
@@ -211,104 +212,12 @@ export function RoomDetailPanel({ scenario, roomId, onChange, onClose }: RoomDet
                         퍼즐 추가
                       </label>
                       {point.puzzle && (
-                        <div className="mt-2 space-y-2 pl-3 border-l border-zinc-700">
-                          {/* 퍼즐 타입 선택 */}
-                          <div>
-                            <Label>퍼즐 타입</Label>
-                            <select
-                              className="bg-zinc-800 border border-zinc-700 rounded px-2 py-1 text-xs text-white w-full"
-                              value={point.puzzle.type}
-                              onChange={e => updatePoint(i, { puzzle: { ...point.puzzle!, type: e.target.value as 'text_input' | 'key_sequence' | 'timer' } })}
-                            >
-                              <option value="text_input">텍스트 입력</option>
-                              <option value="key_sequence">키 시퀀스</option>
-                              <option value="timer">타이머</option>
-                            </select>
-                          </div>
-                          <div>
-                            <Label required>퍼즐 질문</Label>
-                            <Textarea
-                              value={point.puzzle.question}
-                              onChange={e => updatePoint(i, { puzzle: { ...point.puzzle!, question: e.target.value } })}
-                              placeholder={point.puzzle.type === 'key_sequence' ? '올바른 순서로 버튼을 누르시오.' : point.puzzle.type === 'timer' ? '제한 시간 안에 답을 입력하시오.' : '비밀번호는?'}
-                              className="text-xs"
-                            />
-                          </div>
-                          <div>
-                            <Label required>정답</Label>
-                            <Input
-                              value={point.puzzle.answer_hash.startsWith('plain:') ? point.puzzle.answer_hash.slice(6) : point.puzzle.answer_hash}
-                              onChange={e => updatePoint(i, { puzzle: { ...point.puzzle!, answer_hash: `plain:${e.target.value}` } })}
-                              placeholder={point.puzzle.type === 'key_sequence' ? '↑↓←→' : '1234'}
-                              className="text-xs"
-                            />
-                            {point.puzzle.type === 'key_sequence' && (
-                              <p className="text-[10px] text-zinc-500 mt-0.5">시퀀스 정답을 텍스트로 입력 (SHA-256 해시로 변환됩니다)</p>
-                            )}
-                          </div>
-                          <div>
-                            <Label>힌트</Label>
-                            <Input
-                              value={point.puzzle.hint ?? ''}
-                              onChange={e => updatePoint(i, { puzzle: { ...point.puzzle!, hint: e.target.value } })}
-                              placeholder="숫자 4자리..."
-                              className="text-xs"
-                            />
-                          </div>
-                          {/* text_input / key_sequence: 최대 시도 */}
-                          {(point.puzzle.type === 'text_input' || point.puzzle.type === 'key_sequence') && (
-                            <div>
-                              <Label>최대 시도</Label>
-                              <Input
-                                type="number"
-                                min={1}
-                                value={point.puzzle.max_attempts ?? ''}
-                                onChange={e => updatePoint(i, { puzzle: { ...point.puzzle!, max_attempts: e.target.value ? parseInt(e.target.value) : null } })}
-                                placeholder="무제한"
-                                className="text-xs"
-                              />
-                            </div>
-                          )}
-                          {/* timer: 제한 시간 + 최대 시도 */}
-                          {point.puzzle.type === 'timer' && (
-                            <div>
-                              <Label required>제한 시간(초)</Label>
-                              <Input
-                                type="number"
-                                min={1}
-                                value={point.puzzle.time_limit_seconds ?? ''}
-                                onChange={e => updatePoint(i, { puzzle: { ...point.puzzle!, time_limit_seconds: e.target.value ? parseInt(e.target.value) : null } })}
-                                placeholder="60"
-                                className="text-xs"
-                              />
-                            </div>
-                          )}
-                          {point.puzzle.type === 'timer' && (
-                            <div>
-                              <Label>최대 시도</Label>
-                              <Input
-                                type="number"
-                                min={1}
-                                value={point.puzzle.max_attempts ?? ''}
-                                onChange={e => updatePoint(i, { puzzle: { ...point.puzzle!, max_attempts: e.target.value ? parseInt(e.target.value) : null } })}
-                                placeholder="무제한"
-                                className="text-xs"
-                              />
-                            </div>
-                          )}
-                          {/* timer: 실패 메시지 */}
-                          {point.puzzle.type === 'timer' && (
-                            <div>
-                              <Label>시간 초과 메시지</Label>
-                              <Input
-                                value={point.puzzle.fail_message ?? ''}
-                                onChange={e => updatePoint(i, { puzzle: { ...point.puzzle!, fail_message: e.target.value || null } })}
-                                placeholder="시간이 초과되었습니다!"
-                                className="text-xs"
-                              />
-                            </div>
-                          )}
-                        </div>
+                        <PuzzleEditor
+                          value={point.puzzle}
+                          onChange={puz => updatePoint(i, { puzzle: puz })}
+                          rooms={rooms.filter(r => r.id !== roomId)}
+                          items={items}
+                        />
                       )}
                     </div>
                   </div>
@@ -324,6 +233,15 @@ export function RoomDetailPanel({ scenario, roomId, onChange, onClose }: RoomDet
             + 지점 추가
           </button>
         </div>
+        )}
+
+        {tab === 'npcs' && (
+          <NpcEditor
+            room={room}
+            scenario={scenario}
+            onUpdateRoom={updateRoom}
+          />
+        )}
       </div>
     </div>
   )

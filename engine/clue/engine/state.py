@@ -43,6 +43,18 @@ class GameState:
         """hidden=False인 포인트만 반환."""
         return [p for p in self.current_room().points if not p.hidden]
 
+    def visible_npcs(self) -> list:
+        """현재 방의 NPC 목록 반환."""
+        return self.current_room().npcs
+
+    def get_npc_in_room(self, name_or_id: str) -> "Npc | None":  # type: ignore[name-defined]
+        """이름 또는 ID로 현재 방의 NPC 검색 (대소문자 무시)."""
+        target = name_or_id.lower()
+        for npc in self.current_room().npcs:
+            if npc.id.lower() == target or npc.name.lower() == target:
+                return npc
+        return None
+
     def get_point_in_room(self, point_id: str) -> Point | None:
         for p in self.current_room().points:
             if p.id == point_id:
