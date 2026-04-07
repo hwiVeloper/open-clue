@@ -36,9 +36,11 @@ jobs:
         working-directory: engine
         env:
           PYTHONUTF8: "1"
+        shell: bash
         run: |
-          clue build scenarios/abandoned_lab.json
-          clue build scenarios/midnight_library.json
+          for f in scenarios/*.json; do
+            clue build "$f"
+          done
 
       - name: Build with PyInstaller (Windows)
         if: runner.os == 'Windows'
