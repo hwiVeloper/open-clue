@@ -11,11 +11,29 @@ export interface HubMeta {
 
 export type RoomSize = 'S' | 'M' | 'L'
 
+export interface MemoData {
+  id: string
+  text: string
+  color: string
+  position: { x: number; y: number }
+}
+
+export interface GroupData {
+  id: string
+  label: string
+  position: { x: number; y: number }
+  width: number
+  height: number
+  color: string
+}
+
 export interface ProjectRecord {
   id: string
   scenario: Partial<Scenario>
   nodePositions: Record<string, NodePosition>
   nodeSizes: Record<string, RoomSize>
+  memos: MemoData[]
+  groups: GroupData[]
   createdAt: number
   updatedAt: number
   hubMeta?: HubMeta
@@ -59,6 +77,8 @@ export function newProject(): ProjectRecord {
     },
     nodePositions: {},
     nodeSizes: {},
+    memos: [],
+    groups: [],
     createdAt: now,
     updatedAt: now,
   }

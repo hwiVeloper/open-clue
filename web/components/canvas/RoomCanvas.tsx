@@ -17,12 +17,15 @@ import {
   type Connection,
 } from '@xyflow/react'
 import { RoomNode, type RoomNodeData } from './RoomNode'
+import { MemoNode, type MemoNodeData } from './MemoNode'
+import { GroupNode, type GroupNodeData } from './GroupNode'
 import { EdgeWithDelete } from './EdgeWithDelete'
+import { ContextMenu, type ContextMenuItem } from './ContextMenu'
 import type { Scenario, Point } from '../../lib/schema'
 import type { NodePosition } from '../../lib/store'
-import type { RoomSize } from '../../lib/projects'
+import type { RoomSize, MemoData, GroupData } from '../../lib/projects'
 
-const NODE_TYPES = { roomNode: RoomNode }
+const NODE_TYPES = { roomNode: RoomNode, memoNode: MemoNode, groupNode: GroupNode }
 const EDGE_TYPES = { withDelete: EdgeWithDelete }
 
 type PendingConnection = {
@@ -34,12 +37,20 @@ interface RoomCanvasProps {
   scenario: Partial<Scenario>
   nodePositions: Record<string, NodePosition>
   nodeSizes: Record<string, RoomSize>
+  memos: MemoData[]
+  groups: GroupData[]
   selectedRoomId: string | null
   onUpdateScenario: (patch: Partial<Scenario>) => void
   onSetNodePosition: (roomId: string, pos: NodePosition) => void
   onSelectRoom: (roomId: string | null) => void
   onAddRoom: (pos: NodePosition) => void
   onDeleteRoom: (roomId: string) => void
+  onAddMemo: (pos: { x: number; y: number }) => void
+  onUpdateMemo: (id: string, patch: Partial<MemoData>) => void
+  onDeleteMemo: (id: string) => void
+  onAddGroup: (pos: { x: number; y: number }) => void
+  onUpdateGroup: (id: string, patch: Partial<GroupData>) => void
+  onDeleteGroup: (id: string) => void
 }
 
 function computeNodes(
@@ -110,16 +121,25 @@ export function RoomCanvas({
   scenario,
   nodePositions,
   nodeSizes,
+  memos,
+  groups,
   selectedRoomId,
   onUpdateScenario,
   onSetNodePosition,
   onSelectRoom,
   onAddRoom,
   onDeleteRoom,
+  onAddMemo,
+  onUpdateMemo,
+  onDeleteMemo,
+  onAddGroup,
+  onUpdateGroup,
+  onDeleteGroup,
 }: RoomCanvasProps) {
   const [nodes, setNodes, onNodesChange] = useNodesState<Node>([])
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([])
   const [pendingConnection, setPendingConnection] = useState<PendingConnection | null>(null)
+  const [contextMenu, setContextMenu] = useState<{ x: number; y: number; nodeId?: string; nodeType?: string } | null>(null)
 
   // 최신 scenario를 ref로 유지 — 콜백의 stale closure 방지
   const scenarioRef = useRef(scenario)
@@ -139,18 +159,53 @@ export function RoomCanvas({
   }, [onUpdateScenario])
 
   useEffect(() => {
-    setNodes(computeNodes(
+    const roomNodes = computeNodes(
       scenario, nodePositions, nodeSizes, selectedRoomId,
       onSelectRoom, onDeleteRoom,
       (id) => onUpdateScenario({ start_room_id: id }),
-    ))
+    )
+
+    const groupNodes: Node[] = groups.map(g => ({
+      id: g.id,
+      type: 'groupNode',
+      position: g.position,
+      zIndex: -1,
+      data: {
+        label: g.label,
+        width: g.width,
+        height: g.height,
+        color: g.color,
+        onUpdate: (patch: Partial<GroupData>) => onUpdateGroup(g.id, patch),
+        onDelete: () => onDeleteGroup(g.id),
+      } as GroupNodeData,
+    }))
+
+    const memoNodes: Node[] = memos.map(m => ({
+      id: m.id,
+      type: 'memoNode',
+      position: m.position,
+      data: {
+        text: m.text,
+        color: m.color,
+        onUpdate: (patch: Partial<MemoData>) => onUpdateMemo(m.id, patch),
+        onDelete: () => onDeleteMemo(m.id),
+      } as MemoNodeData,
+    }))
+
+    setNodes([...groupNodes, ...roomNodes, ...memoNodes])
     setEdges(computeEdges(scenario, onDeleteEdge))
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [scenario.rooms, scenario.start_room_id, selectedRoomId, nodePositions, nodeSizes, onDeleteEdge])
+  }, [scenario.rooms, scenario.start_room_id, selectedRoomId, nodePositions, nodeSizes, memos, groups, onDeleteEdge])
 
   const onNodeDragStop = useCallback((_: React.MouseEvent, node: Node) => {
-    onSetNodePosition(node.id, node.position)
-  }, [onSetNodePosition])
+    if (node.type === 'memoNode') {
+      onUpdateMemo(node.id, { position: node.position })
+    } else if (node.type === 'groupNode') {
+      onUpdateGroup(node.id, { position: node.position })
+    } else {
+      onSetNodePosition(node.id, node.position)
+    }
+  }, [onSetNodePosition, onUpdateMemo, onUpdateGroup])
 
   // 방 연결 드래그: 즉시 포인트 생성하지 않고 피커를 띄움
   const onConnect = useCallback((params: Connection) => {
@@ -224,7 +279,42 @@ export function RoomCanvas({
 
   const onPaneClick = useCallback(() => {
     onSelectRoom(null)
+    setContextMenu(null)
   }, [onSelectRoom])
+
+  const onPaneContextMenu = useCallback((event: React.MouseEvent) => {
+    event.preventDefault()
+    const flowPos = screenToFlowPosition({ x: event.clientX, y: event.clientY })
+    setContextMenu({ x: event.clientX, y: event.clientY, ...flowPos && { flowX: flowPos.x, flowY: flowPos.y } })
+  }, [screenToFlowPosition])
+
+  const onNodeContextMenu = useCallback((event: React.MouseEvent, node: Node) => {
+    event.preventDefault()
+    setContextMenu({ x: event.clientX, y: event.clientY, nodeId: node.id, nodeType: node.type })
+  }, [])
+
+  const contextMenuItems: ContextMenuItem[] = contextMenu?.nodeId
+    ? [
+        { label: '삭제', icon: '🗑', danger: true, onClick: () => {
+          if (contextMenu.nodeType === 'memoNode') onDeleteMemo(contextMenu.nodeId!)
+          else if (contextMenu.nodeType === 'groupNode') onDeleteGroup(contextMenu.nodeId!)
+          else onDeleteRoom(contextMenu.nodeId!)
+        }},
+      ]
+    : [
+        { label: '방 추가', icon: '🚪', onClick: () => {
+          const pos = screenToFlowPosition({ x: contextMenu!.x, y: contextMenu!.y })
+          onAddRoom({ x: pos.x - 70, y: pos.y - 20 })
+        }},
+        { label: '메모 추가', icon: '📝', onClick: () => {
+          const pos = screenToFlowPosition({ x: contextMenu!.x, y: contextMenu!.y })
+          onAddMemo(pos)
+        }},
+        { label: '그룹 박스 추가', icon: '📦', onClick: () => {
+          const pos = screenToFlowPosition({ x: contextMenu!.x, y: contextMenu!.y })
+          onAddGroup(pos)
+        }},
+      ]
 
   // 피커에 필요한 정보
   const pickerSourceRoom = pendingConnection
@@ -248,6 +338,8 @@ export function RoomCanvas({
         onEdgesDelete={onEdgesDelete}
         onPaneClick={onPaneClick}
         onDoubleClick={onPaneDoubleClick}
+        onContextMenu={onPaneContextMenu}
+        onNodeContextMenu={onNodeContextMenu}
         zoomOnDoubleClick={false}
         colorMode="dark"
         deleteKeyCode="Delete"
@@ -334,8 +426,18 @@ export function RoomCanvas({
         </div>
       )}
 
+      {/* 컨텍스트 메뉴 */}
+      {contextMenu && (
+        <ContextMenu
+          x={contextMenu.x}
+          y={contextMenu.y}
+          items={contextMenuItems}
+          onClose={() => setContextMenu(null)}
+        />
+      )}
+
       <div className="absolute bottom-4 left-1/2 -translate-x-1/2 text-xs text-zinc-600 pointer-events-none select-none">
-        더블클릭 → 방 추가 · 핸들 드래그 → 연결 · Delete → 삭제
+        더블클릭 → 방 추가 · 우클릭 → 메뉴 · 핸들 드래그 → 연결 · Delete → 삭제
       </div>
     </div>
   )

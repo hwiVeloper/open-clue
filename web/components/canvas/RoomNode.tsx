@@ -17,9 +17,9 @@ export type RoomNodeData = {
 } & Record<string, unknown>
 
 const SIZE_CLASSES: Record<RoomSize, string> = {
-  S: 'min-w-[110px] max-w-[110px]',
-  M: 'min-w-[150px] max-w-[150px]',
-  L: 'min-w-[210px] max-w-[210px]',
+  S: 'w-[110px] h-[80px]',
+  M: 'w-[150px] h-[110px]',
+  L: 'w-[210px] h-[150px]',
 }
 
 const SIZE_LABEL_COLORS: Record<RoomSize, string> = {
@@ -36,7 +36,7 @@ function RoomNodeComponent({ data }: NodeProps<Node<RoomNodeData>>) {
       onClick={onSelect}
       className={`
         relative bg-zinc-900 border-2 rounded-lg p-3 cursor-pointer select-none
-        transition-all duration-150
+        transition-all duration-150 overflow-hidden
         ${SIZE_CLASSES[size]}
         ${isSelected
           ? 'border-green-400 shadow-lg shadow-green-900/40'

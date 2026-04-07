@@ -28,6 +28,8 @@ function BuilderContent() {
     setSelectedRoom, setOverlay,
     addRoom, deleteRoom,
     updateHubMeta,
+    memos, addMemo, updateMemo, deleteMemo,
+    groups, addGroup, updateGroup, deleteGroup,
   } = useBuilderStore(projectId)
 
   const [sidebarWidth, setSidebarWidth] = useState(256)
@@ -102,12 +104,20 @@ function BuilderContent() {
             scenario={scenario}
             nodePositions={nodePositions}
             nodeSizes={nodeSizes}
+            memos={memos}
+            groups={groups}
             selectedRoomId={selectedRoomId}
             onUpdateScenario={updateScenario}
             onSetNodePosition={setNodePosition}
             onSelectRoom={setSelectedRoom}
             onAddRoom={addRoom}
             onDeleteRoom={deleteRoom}
+            onAddMemo={addMemo}
+            onUpdateMemo={updateMemo}
+            onDeleteMemo={deleteMemo}
+            onAddGroup={addGroup}
+            onUpdateGroup={updateGroup}
+            onDeleteGroup={deleteGroup}
           />
           </ReactFlowProvider>
           {selectedRoomId && (
