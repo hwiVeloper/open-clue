@@ -484,6 +484,78 @@ class GameScreen(Screen):
         except Exception:
             pass
 
+    # ------------------------------------------------------------------ autocomplete
+    def _get_completions(self, text: str) -> list[str]:
+        """현재 입력에 대한 자동완성 후보를 반환."""
+        parts = text.split(maxsplit=1)
+        verb = parts[0].lower() if parts else ""
+        has_space = len(parts) > 1 or text.endswith(" ")
+
+        # 명령어 자체를 완성
+        if not has_space:
+            commands = ["look", "inspect", "use", "inv", "hint", "help", "talk", "quit"]
+            return [c for c in commands if c.startswith(verb)]
+
+        # 명령어 뒤의 인자를 완성
+        partial = parts[1].lower() if len(parts) > 1 else ""
+
+        if verb in ("inspect", "i", "cd", "examine", "ex"):
+            # 포인트 ID + 이름
+            candidates = []
+            for p in self._state.visible_points():
+                candidates.append(p.id)
+                candidates.append(p.name)
+            return [c for c in candidates if c.lower().startswith(partial)]
+
+        if verb in ("use", "u"):
+            # 인벤토리 아이템 ID + 이름
+            candidates = []
+            for item_id in self._state.inventory:
+                candidates.append(item_id)
+                item = self._state.get_item_info(item_id)
+                if item:
+                    candidates.append(item.name)
+            return [c for c in candidates if c.lower().startswith(partial)]
+
+        if verb in ("talk", "t", "speak"):
+            # NPC ID + 이름
+            candidates = []
+            for npc in self._state.visible_npcs():
+                candidates.append(npc.id)
+                candidates.append(npc.name)
+            return [c for c in candidates if c.lower().startswith(partial)]
+
+        return []
+
+    def on_key(self, event) -> None:
+        if event.key != "tab":
+            return
+        event.prevent_default()
+        event.stop()
+
+        inp = self.query_one("#cmd-input", Input)
+        text = inp.value
+
+        if self._puzzle_mode:
+            return
+
+        completions = self._get_completions(text)
+        if not completions:
+            return
+
+        if len(completions) == 1:
+            # 단일 후보: 자동완성
+            parts = text.split(maxsplit=1)
+            if len(parts) > 1 or text.endswith(" "):
+                verb = parts[0]
+                inp.value = f"{verb} {completions[0]}"
+            else:
+                inp.value = completions[0] + " "
+            inp.cursor_position = len(inp.value)
+        else:
+            # 복수 후보: 목록 표시
+            self._log(f"  {' | '.join(completions)}", "log-info")
+
     # ------------------------------------------------------------------ input
     def on_input_submitted(self, event: Input.Submitted) -> None:
         raw = event.value.strip()
@@ -556,12 +628,13 @@ class GameScreen(Screen):
         elif cmd.command == "use":
             self._log(f"> {raw}", "log-normal")
             if not cmd.target:
-                self._log("use 뒤에 아이템 ID를 입력하세요.", "log-error")
+                self._log("use 뒤에 아이템 이름 또는 ID를 입력하세요.", "log-error")
                 return
-            if not self._state.has_item(cmd.target):
+            resolved_id = self._state.resolve_item_id(cmd.target)
+            if not resolved_id:
                 self._log(f"'{cmd.target}'을(를) 가지고 있지 않습니다.", "log-error")
                 return
-            item = self._state.get_item_info(cmd.target)
+            item = self._state.get_item_info(resolved_id)
             if item:
                 self._log(f"[{item.name}] {item.description}", "log-info")
 

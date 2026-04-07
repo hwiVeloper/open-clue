@@ -16,20 +16,38 @@ async function getKey(): Promise<CryptoKey> {
  * plain: 접두사가 붙은 answer_hash를 SHA-256 hex digest로 변환한다.
  * 예: "plain:1234" → sha256("1234")
  */
-export async function processPlainAnswers(jsonStr: string): Promise<string> {
-  const encoder = new TextEncoder()
-  const regex = /"answer_hash":\s*"plain:([^"]+)"/g
-  const matches = [...jsonStr.matchAll(regex)]
+async function hashPlain(plain: string): Promise<string> {
+  const hashBuffer = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(plain))
+  return Array.from(new Uint8Array(hashBuffer))
+    .map(b => b.toString(16).padStart(2, '0'))
+    .join('')
+}
 
+export async function processPlainAnswers(jsonStr: string): Promise<string> {
   let result = jsonStr
-  for (const match of matches) {
-    const plain = match[1]
-    const hashBuffer = await crypto.subtle.digest('SHA-256', encoder.encode(plain))
-    const hex = Array.from(new Uint8Array(hashBuffer))
-      .map(b => b.toString(16).padStart(2, '0'))
-      .join('')
+
+  // 단일 문자열: "answer_hash": "plain:xxx"
+  const singleRegex = /"answer_hash":\s*"plain:([^"]+)"/g
+  const singleMatches = [...result.matchAll(singleRegex)]
+  for (const match of singleMatches) {
+    const hex = await hashPlain(match[1])
     result = result.replace(match[0], `"answer_hash": "${hex}"`)
   }
+
+  // 배열: "answer_hash": ["plain:a", "plain:b"]
+  const arrayRegex = /"answer_hash":\s*\[([^\]]+)\]/g
+  const arrayMatches = [...result.matchAll(arrayRegex)]
+  for (const match of arrayMatches) {
+    const itemRegex = /"plain:([^"]+)"/g
+    let items = match[1]
+    const itemMatches = [...items.matchAll(itemRegex)]
+    for (const im of itemMatches) {
+      const hex = await hashPlain(im[1])
+      items = items.replace(im[0], `"${hex}"`)
+    }
+    result = result.replace(match[0], `"answer_hash": [${items}]`)
+  }
+
   return result
 }
 

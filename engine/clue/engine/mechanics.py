@@ -75,21 +75,25 @@ def _execute_single(state: GameState, action: Action) -> ActionResult:
 # Puzzle
 # ---------------------------------------------------------------------------
 
-def verify_answer(user_input: str, answer_hash: str) -> bool:
+def verify_answer(user_input: str, answer_hash: str | list[str]) -> bool:
     digest = hashlib.sha256(user_input.strip().encode()).hexdigest()
+    if isinstance(answer_hash, list):
+        return any(digest == h for h in answer_hash)
     return digest == answer_hash
 
 
-def verify_sequence(user_input: str, puzzle_keys: list[str], expected: list[str]) -> bool:
+def verify_sequence(user_input: str, puzzle_keys: list[str], expected: list[str] | list[list[str]]) -> bool:
     """
     사용자가 입력한 공백 구분 번호 목록을 키 인덱스로 변환해 expected와 비교.
-    예: "1 3 1 4" + keys=["↑","↓","←","→"] → ["↑","←","↑","→"]
+    expected가 이중 배열이면 여러 정답 경로 중 하나와 매치하면 True.
     """
     parts = user_input.strip().split()
     try:
         selected = [puzzle_keys[int(p) - 1] for p in parts]
     except (ValueError, IndexError):
         return False
+    if expected and isinstance(expected[0], list):
+        return any(selected == seq for seq in expected)
     return selected == expected
 
 

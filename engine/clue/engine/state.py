@@ -40,8 +40,14 @@ class GameState:
         return room
 
     def visible_points(self) -> list[Point]:
-        """hidden=False인 포인트만 반환."""
-        return [p for p in self.current_room().points if not p.hidden]
+        """hidden=False이거나, hidden이지만 requirements를 충족한 포인트를 반환."""
+        result = []
+        for p in self.current_room().points:
+            if not p.hidden:
+                result.append(p)
+            elif p.hidden and self.check_requirements(p)[0]:
+                result.append(p)
+        return result
 
     def visible_npcs(self) -> list:
         """현재 방의 NPC 목록 반환."""
@@ -67,6 +73,17 @@ class GameState:
 
     def has_item(self, item_id: str) -> bool:
         return item_id in self.inventory
+
+    def resolve_item_id(self, name_or_id: str) -> str | None:
+        """ID 또는 표시 이름으로 인벤토리 아이템을 찾아 ID를 반환."""
+        if name_or_id in self.inventory:
+            return name_or_id
+        target = name_or_id.lower()
+        for item_id in self.inventory:
+            item = self.scenario.get_item(item_id)
+            if item and item.name.lower() == target:
+                return item_id
+        return None
 
     def add_item(self, item_id: str) -> None:
         if item_id not in self.inventory:

@@ -77,7 +77,7 @@
             "type": "text_input",
             "question": "터미널에 명령어를 입력하시오.\n\n시스템의 파일 목록을 확인하려면 어떤 명령어를 써야 할까?\n(숨긴 파일까지 모두 보는 명령어)",
             "hint": "리눅스에서 숨김 파일을 포함한 전체 목록을 보려면... ls에 옵션을 붙여보자.",
-            "answer_hash": "plain:ls -al",
+            "answer_hash": ["plain:ls -al", "plain:ls -la"],
             "max_attempts": null,
             "fail_message": "  > command not found\n  > 다시 시도하시오.",
             "on_success": [
@@ -92,10 +92,10 @@
           "description": "발견한 .hint 파일의 내용을 분석해야 한다.",
           "hidden": true,
           "requirements": {"flag": {"found_hint_file": true}},
-          "observation": ".hint 파일을 열자 ASCII 아트가 나타난다:\n\n  ######   #####   #####    ####\n  #    #   #   #   #   #   #    #\n  #    #   #   #   #   #   #    #\n  ######   #####   #####    ####\n  #    #       #       #   #    #\n  #    #   #   #   #   #   #    #\n  ######   #####   #####    ####\n\n이 숫자들을 읽어서 입력해야 한다.",
+          "observation": ".hint 파일을 열자 ASCII 아트가 나타난다:\n\n  ####   ####   ####   ####\n  #  #   #  #   #  #      #\n  #  #   #  #   #  #      #\n  ####   ####   ####   ####\n  #  #      #      #      #\n  #  #      #      #      #\n  ####   ####   ####   ####\n\n이 숫자들을 읽어서 입력해야 한다.",
           "puzzle": {
             "type": "text_input",
-            "question": "ASCII 아트에 표현된 4자리 숫자를 입력하시오.\n\n  ######   #####   #####    ####\n  #    #   #   #   #   #   #    #\n  #    #   #   #   #   #   #    #\n  ######   #####   #####    ####\n  #    #       #       #   #    #\n  #    #   #   #   #   #   #    #\n  ######   #####   #####    ####",
+            "question": "ASCII 아트에 표현된 4자리 숫자를 입력하시오.\n\n  ####   ####   ####   ####\n  #  #   #  #   #  #      #\n  #  #   #  #   #  #      #\n  ####   ####   ####   ####\n  #  #      #      #      #\n  #  #      #      #      #\n  ####   ####   ####   ####",
             "hint": "7세그먼트 디스플레이를 생각해보자. 각 글자의 윗부분, 중간, 아랫부분의 형태를 보면...",
             "answer_hash": "plain:8993",
             "max_attempts": 5,
@@ -267,7 +267,7 @@
             "type": "text_input",
             "question": "시저 암호를 해독하시오.\n\n  암호문: KHOOR\n  시프트 값: 4 - 3 = 1... 이 아니다.\n\n  추가 메모: 'The classic shift.'\n  힌트: 시저 암호의 가장 고전적인 시프트 값은 3이다.\n\n  KHOOR을 3만큼 뒤로 시프트하면?\n  K→?, H→?, O→?, O→?, R→?",
             "hint": "알파벳을 3칸 앞으로: K→H, H→E, O→L, O→L, R→O",
-            "answer_hash": "plain:HELLO",
+            "answer_hash": ["plain:HELLO", "plain:hello", "plain:Hello"],
             "max_attempts": null,
             "fail_message": "  > DECRYPTION FAILED: 복호화 키가 올바르지 않습니다.",
             "on_success": [
@@ -304,14 +304,14 @@
           "id": "wiring_panel",
           "name": "배선 패널",
           "description": "커넥터들이 흩어져 있는 배선 패널. 왼쪽에서 오른쪽까지 연결해야 한다.",
-          "observation": "배선 패널의 구조:\n\n  입력 ──[A]    [D]──[E]── 출력\n            \\  /\n            [B]\n            /  \\\n         [C]    [F]\n\n각 노드를 올바른 순서로 활성화해야 한다.\n\n규칙:\n  - A에서 시작해서 E에서 끝나야 함\n  - 연결된 노드만 이동 가능\n  - A-B, B-C, B-D, C-F, D-E 가 연결됨\n  - 모든 노드를 한 번씩 방문해야 함",
+          "observation": "배선 패널의 구조:\n\n  입력 ──[A]──[B]──[C]\n                |     |\n              [D]──[F]\n                |\n              [E]── 출력\n\n각 노드를 올바른 순서로 활성화해야 한다.\n\n규칙:\n  - A에서 시작해서 E에서 끝나야 함\n  - 연결된 노드만 이동 가능\n  - A-B, B-C, B-D, C-F, D-F, D-E 가 연결됨\n  - 모든 노드를 한 번씩 방문해야 함",
           "puzzle": {
             "type": "key_sequence",
-            "question": "배선 연결 순서를 입력하시오.\n\n  입력 ──[A]    [D]──[E]── 출력\n            \\  /\n            [B]\n            /  \\\n         [C]    [F]\n\n  연결: A-B, B-C, B-D, C-F, D-E\n  규칙: A에서 시작, E에서 종료, 모든 노드 방문\n\n  (노드 알파벳을 순서대로 입력)",
-            "hint": "A에서 시작 → B로 → C로 갔다가 → 돌아와서... F도 방문해야 한다. C-F가 연결되어 있으니 A→B→C→F... 아, F에서 막힌다. A→B→D→E? 그러면 C,F를 못 간다. 다시 생각해보자.",
-            "answer_hash": "plain:ABCFBDE",
+            "question": "배선 연결 순서를 입력하시오.\n\n  입력 ──[A]──[B]──[C]\n                |     |\n              [D]──[F]\n                |\n              [E]── 출력\n\n  연결: A-B, B-C, B-D, C-F, D-F, D-E\n  규칙: A에서 시작, E에서 종료, 모든 노드를 한 번씩 방문\n\n  (노드 알파벳을 순서대로 입력)",
+            "hint": "A→B에서 시작. C와 F를 먼저 방문하고 D를 거쳐 E로 나가야 한다.",
+            "answer_hash": "plain:ABCFDE",
             "keys": ["A", "B", "C", "D", "E", "F"],
-            "sequence": ["A", "B", "C", "F", "B", "D", "E"],
+            "sequence": ["A", "B", "C", "F", "D", "E"],
             "fail_message": "  > WIRING ERROR: 연결이 끊어졌습니다.\n  > 유효한 경로로 다시 시도하시오.",
             "on_success": {"type": "set_flag", "value": {"privilege_wired": true}}
           }
@@ -483,7 +483,7 @@
             "type": "text_input",
             "question": "바이너리를 ASCII 텍스트로 변환하시오.\n\n  01001000 = ?\n  01000001 = ?\n  01000011 = ?\n  01001011 = ?\n\n  (힌트: 01000001 = 65 = 'A')\n  변환된 4글자 단어를 입력하시오.",
             "hint": "01001000=72=H, 01000001=65=A, 01000011=67=C, 01001011=75=K",
-            "answer_hash": "plain:HACK",
+            "answer_hash": ["plain:HACK", "plain:hack", "plain:Hack"],
             "max_attempts": null,
             "fail_message": "  > FIREWALL INTACT: 바이너리 해독 실패.\n  > 다시 계산하시오.",
             "on_success": {"type": "set_flag", "value": {"firewall_sequence": true}}
@@ -500,7 +500,7 @@
             "type": "text_input",
             "question": "최종 탈출 명령어를 입력하시오.\n\n  시스템을 완전히 종료하는 명령어는?\n  (리눅스 강제 종료 명령어를 입력하라)\n\n  > _",
             "hint": "시스템을 지금 당장 종료: shutdown now, 또는 exit",
-            "answer_hash": "plain:exit",
+            "answer_hash": ["plain:exit", "plain:logout", "plain:shutdown now"],
             "max_attempts": null,
             "fail_message": "  > COMMAND NOT RECOGNIZED\n  > 올바른 종료 명령어를 입력하시오.",
             "on_success": {"type": "game_clear", "value": null}

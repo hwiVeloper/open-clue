@@ -16,7 +16,7 @@ export const PuzzleSchema = z.object({
   type: z.enum(['text_input', 'key_sequence', 'timer']).default('text_input'),
   question: z.string(),
   hint: z.string().optional().nullable(),
-  answer_hash: z.string(),
+  answer_hash: z.union([z.string(), z.array(z.string())]),
   max_attempts: z.number().int().positive().optional().nullable(),
   time_limit_seconds: z.number().int().positive().optional().nullable(),
   fail_message: z.string().optional().nullable(),

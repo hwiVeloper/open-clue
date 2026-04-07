@@ -23,16 +23,27 @@ def _hash_answer(answer: str) -> str:
 def _process_plain_answers(data: dict) -> dict:
     """
     시나리오 dict를 순회하며 answer_hash 값이 "plain:<answer>" 형식이면
-    SHA-256 해시로 자동 변환한다.
+    SHA-256 해시로 자동 변환한다. 배열 형태도 지원.
     """
     text = json.dumps(data, ensure_ascii=False)
 
+    # 단일 문자열: "answer_hash": "plain:xxx"
     def replacer(m: re.Match) -> str:
         answer = m.group(1)
         hashed = _hash_answer(answer)
         return f'"answer_hash": "{hashed}"'
 
     text = re.sub(r'"answer_hash":\s*"plain:([^"]+)"', replacer, text)
+
+    # 배열: "answer_hash": ["plain:a", "plain:b"] — 각 요소를 개별 변환
+    def array_replacer(m: re.Match) -> str:
+        items_str = m.group(1)
+        def item_replacer(im: re.Match) -> str:
+            return f'"{_hash_answer(im.group(1))}"'
+        converted = re.sub(r'"plain:([^"]+)"', item_replacer, items_str)
+        return f'"answer_hash": [{converted}]'
+
+    text = re.sub(r'"answer_hash":\s*\[([^\]]+)\]', array_replacer, text)
     return json.loads(text)
 
 

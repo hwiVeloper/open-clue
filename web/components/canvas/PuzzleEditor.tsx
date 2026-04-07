@@ -12,6 +12,21 @@ interface PuzzleEditorProps {
   items: Scenario['items']
 }
 
+/** answer_hash(string | string[]) → 표시용 텍스트 */
+function answerHashToDisplay(hash: string | string[]): string {
+  if (Array.isArray(hash)) {
+    return hash.map(h => h.startsWith('plain:') ? h.slice(6) : h).join('\n')
+  }
+  return hash.startsWith('plain:') ? hash.slice(6) : hash
+}
+
+/** 표시용 텍스트 → answer_hash(string | string[]) */
+function displayToAnswerHash(display: string): string | string[] {
+  const lines = display.split('\n').filter(l => l.length > 0)
+  if (lines.length <= 1) return `plain:${lines[0] ?? ''}`
+  return lines.map(l => `plain:${l}`)
+}
+
 const TABS = [
   { type: 'text_input', label: '✏️ 텍스트' },
   { type: 'key_sequence', label: '🔢 시퀀스' },
@@ -31,7 +46,7 @@ export function PuzzleEditor({ value, onChange, rooms, items }: PuzzleEditorProp
             key={tab.type}
             onClick={() => update({
               type: tab.type,
-              answer_hash: tab.type === 'key_sequence' ? '' : (p.answer_hash || 'plain:'),
+              answer_hash: tab.type === 'key_sequence' ? '' : (Array.isArray(p.answer_hash) ? p.answer_hash : (p.answer_hash || 'plain:')),
               keys: p.keys ?? [],
               sequence: p.sequence ?? [],
             })}
@@ -60,11 +75,12 @@ export function PuzzleEditor({ value, onChange, rooms, items }: PuzzleEditorProp
       {/* text_input 전용 */}
       {p.type === 'text_input' && (
         <div>
-          <Label required>정답</Label>
-          <Input
-            value={p.answer_hash.startsWith('plain:') ? p.answer_hash.slice(6) : p.answer_hash}
-            onChange={e => update({ answer_hash: `plain:${e.target.value}` })}
-            placeholder="1234"
+          <Label required>정답 <span className="text-zinc-600 font-normal">(줄바꿈으로 복수 정답 구분)</span></Label>
+          <Textarea
+            value={answerHashToDisplay(p.answer_hash)}
+            onChange={e => update({ answer_hash: displayToAnswerHash(e.target.value) })}
+            placeholder={"1234\n또는 다른 정답"}
+            rows={2}
             className="text-xs"
           />
         </div>
@@ -119,11 +135,12 @@ export function PuzzleEditor({ value, onChange, rooms, items }: PuzzleEditorProp
       {p.type === 'timer' && (
         <div className="space-y-2">
           <div>
-            <Label required>정답</Label>
-            <Input
-              value={p.answer_hash.startsWith('plain:') ? p.answer_hash.slice(6) : p.answer_hash}
-              onChange={e => update({ answer_hash: `plain:${e.target.value}` })}
-              placeholder="1234"
+            <Label required>정답 <span className="text-zinc-600 font-normal">(줄바꿈으로 복수 정답 구분)</span></Label>
+            <Textarea
+              value={answerHashToDisplay(p.answer_hash)}
+              onChange={e => update({ answer_hash: displayToAnswerHash(e.target.value) })}
+              placeholder={"1234\n또는 다른 정답"}
+              rows={2}
               className="text-xs"
             />
           </div>

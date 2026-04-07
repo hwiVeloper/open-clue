@@ -31,7 +31,7 @@ class Puzzle(BaseModel):
     type: Literal["text_input", "key_sequence", "timer"] = "text_input"
     question: str
     hint: str | None = None
-    answer_hash: str  # SHA-256 hex digest, or "plain:<answer>" before build
+    answer_hash: str | list[str]  # SHA-256 hex digest(s), or "plain:<answer>" before build
     max_attempts: int | None = None
     time_limit_seconds: int | None = None
     fail_message: str | None = None
