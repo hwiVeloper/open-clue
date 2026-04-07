@@ -1,5 +1,5 @@
 @import "tailwindcss";
 
 @theme inline {
-  --font-mono: "Consolas", "Courier New", Courier, monospace;
+  --font-mono: "D2Coding ligature", "D2Coding", "Consolas", "Courier New", Courier, monospace;
 }

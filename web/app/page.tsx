@@ -64,11 +64,11 @@ export default function HomePage() {
     <main className="min-h-screen bg-zinc-950 text-white">
       <div className="max-w-3xl mx-auto px-6 py-12">
         {/* 헤더 */}
-        <div className="mb-10">
+        <div className="mb-10 text-center">
           <pre
-            className="text-green-400 hidden sm:block text-left"
+            className="text-green-400 hidden sm:inline-block text-left"
             style={{
-              fontFamily: '"Consolas", "Courier New", Courier, monospace',
+              fontFamily: '"D2Coding ligature", "D2Coding", "Consolas", "Courier New", Courier, monospace',
               fontSize: '14px',
               lineHeight: '1.2',
               letterSpacing: '0',
@@ -80,7 +80,7 @@ export default function HomePage() {
         </div>
 
         {/* 액션 버튼 */}
-        <div className="flex gap-3 mb-8">
+        <div className="flex gap-3 mb-8 justify-center">
           <button
             onClick={handleNew}
             className="bg-green-700 hover:bg-green-600 text-white text-sm px-4 py-2 rounded font-medium transition-colors"

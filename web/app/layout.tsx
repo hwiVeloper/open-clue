@@ -11,7 +11,13 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="ko">
-      <body className="bg-zinc-950 text-white min-h-screen antialiased">
+      <head>
+        <link
+          rel="stylesheet"
+          href="https://cdn.jsdelivr.net/gh/wan2land/d2coding/d2coding-ligature-full.css"
+        />
+      </head>
+      <body className="bg-zinc-950 text-white min-h-screen antialiased" style={{ fontFamily: '"D2Coding", "D2Coding ligature", monospace' }}>
         {children}
       </body>
     </html>
