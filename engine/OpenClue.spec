@@ -1,15 +1,17 @@
 # -*- mode: python ; coding: utf-8 -*-
+import glob
 
+scenario_datas = [(f, 'scenarios') for f in glob.glob('scenarios/*.dat')]
 
 a = Analysis(
     ['clue\\main.py'],
     pathex=[],
     binaries=[],
-    datas=[('scenarios/abandoned_lab.dat', 'scenarios'), ('scenarios/midnight_library.dat', 'scenarios')],
+    datas=scenario_datas,
     hiddenimports=[],
     hookspath=[],
     hooksconfig={},
-    runtime_hooks=[],
+    runtime_hooks=['hooks/hook-encoding.py'],
     excludes=[],
     noarchive=False,
     optimize=0,
