@@ -3,7 +3,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react'
 import type { Scenario } from './schema'
-import { getProject, saveProject, type ProjectRecord, type HubMeta } from './projects'
+import { getProject, saveProject, type ProjectRecord, type HubMeta, type RoomSize } from './projects'
 
 export type NodePosition = { x: number; y: number }
 
@@ -50,6 +50,7 @@ export function useBuilderStore(projectId: string | null) {
   // scenario shortcut
   const scenario = state.project?.scenario ?? {} as Partial<Scenario>
   const nodePositions = state.project?.nodePositions ?? {}
+  const nodeSizes = state.project?.nodeSizes ?? {}
 
   const updateScenario = useCallback((patch: Partial<Scenario>) => {
     setProject(p => ({ ...p, scenario: { ...p.scenario, ...patch } }))
@@ -57,6 +58,10 @@ export function useBuilderStore(projectId: string | null) {
 
   const setNodePosition = useCallback((roomId: string, pos: NodePosition) => {
     setProject(p => ({ ...p, nodePositions: { ...p.nodePositions, [roomId]: pos } }))
+  }, [setProject])
+
+  const setNodeSize = useCallback((roomId: string, size: RoomSize) => {
+    setProject(p => ({ ...p, nodeSizes: { ...p.nodeSizes, [roomId]: size } }))
   }, [setProject])
 
   const setSelectedRoom = useCallback((roomId: string | null) => {
@@ -89,6 +94,8 @@ export function useBuilderStore(projectId: string | null) {
       const rooms = (p.scenario.rooms ?? []).filter(r => r.id !== roomId)
       const positions = { ...p.nodePositions }
       delete positions[roomId]
+      const sizes = { ...p.nodeSizes }
+      delete sizes[roomId]
       return {
         ...p,
         scenario: {
@@ -99,6 +106,7 @@ export function useBuilderStore(projectId: string | null) {
             : p.scenario.start_room_id,
         },
         nodePositions: positions,
+        nodeSizes: sizes,
       }
     })
     setStateRaw(prev => ({
@@ -116,10 +124,12 @@ export function useBuilderStore(projectId: string | null) {
     hydrated,
     scenario,
     nodePositions,
+    nodeSizes,
     selectedRoomId: state.selectedRoomId,
     overlay: state.overlay,
     updateScenario,
     setNodePosition,
+    setNodeSize,
     setSelectedRoom,
     setOverlay,
     addRoom,

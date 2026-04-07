@@ -9,10 +9,13 @@ export interface HubMeta {
   visibility?: 'public' | 'private'
 }
 
+export type RoomSize = 'S' | 'M' | 'L'
+
 export interface ProjectRecord {
   id: string
   scenario: Partial<Scenario>
   nodePositions: Record<string, NodePosition>
+  nodeSizes: Record<string, RoomSize>
   createdAt: number
   updatedAt: number
   hubMeta?: HubMeta
@@ -55,6 +58,7 @@ export function newProject(): ProjectRecord {
       rooms: [],
     },
     nodePositions: {},
+    nodeSizes: {},
     createdAt: now,
     updatedAt: now,
   }

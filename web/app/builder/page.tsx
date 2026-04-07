@@ -22,9 +22,9 @@ function BuilderContent() {
 
   const {
     state, hydrated,
-    scenario, nodePositions,
+    scenario, nodePositions, nodeSizes,
     selectedRoomId, overlay,
-    updateScenario, setNodePosition,
+    updateScenario, setNodePosition, setNodeSize,
     setSelectedRoom, setOverlay,
     addRoom, deleteRoom,
     updateHubMeta,
@@ -101,6 +101,7 @@ function BuilderContent() {
           <RoomCanvas
             scenario={scenario}
             nodePositions={nodePositions}
+            nodeSizes={nodeSizes}
             selectedRoomId={selectedRoomId}
             onUpdateScenario={updateScenario}
             onSetNodePosition={setNodePosition}
@@ -113,7 +114,9 @@ function BuilderContent() {
             <RoomDetailPanel
               scenario={scenario}
               roomId={selectedRoomId}
+              roomSize={nodeSizes[selectedRoomId] ?? 'M'}
               onChange={updateScenario}
+              onSizeChange={(size) => setNodeSize(selectedRoomId, size)}
               onClose={() => setSelectedRoom(null)}
             />
           )}

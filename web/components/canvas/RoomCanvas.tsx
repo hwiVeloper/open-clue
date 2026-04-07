@@ -20,6 +20,7 @@ import { RoomNode, type RoomNodeData } from './RoomNode'
 import { EdgeWithDelete } from './EdgeWithDelete'
 import type { Scenario, Point } from '../../lib/schema'
 import type { NodePosition } from '../../lib/store'
+import type { RoomSize } from '../../lib/projects'
 
 const NODE_TYPES = { roomNode: RoomNode }
 const EDGE_TYPES = { withDelete: EdgeWithDelete }
@@ -32,6 +33,7 @@ type PendingConnection = {
 interface RoomCanvasProps {
   scenario: Partial<Scenario>
   nodePositions: Record<string, NodePosition>
+  nodeSizes: Record<string, RoomSize>
   selectedRoomId: string | null
   onUpdateScenario: (patch: Partial<Scenario>) => void
   onSetNodePosition: (roomId: string, pos: NodePosition) => void
@@ -43,6 +45,7 @@ interface RoomCanvasProps {
 function computeNodes(
   scenario: Partial<Scenario>,
   nodePositions: Record<string, NodePosition>,
+  nodeSizes: Record<string, RoomSize>,
   selectedRoomId: string | null,
   onSelect: (id: string) => void,
   onDelete: (id: string) => void,
@@ -54,6 +57,7 @@ function computeNodes(
     position: nodePositions[room.id] ?? { x: i * 220, y: 100 },
     data: {
       room,
+      size: nodeSizes[room.id] ?? 'M',
       isStart: room.id === scenario.start_room_id,
       isSelected: room.id === selectedRoomId,
       onSelect: () => onSelect(room.id),
@@ -105,6 +109,7 @@ function computeEdges(
 export function RoomCanvas({
   scenario,
   nodePositions,
+  nodeSizes,
   selectedRoomId,
   onUpdateScenario,
   onSetNodePosition,
@@ -135,13 +140,13 @@ export function RoomCanvas({
 
   useEffect(() => {
     setNodes(computeNodes(
-      scenario, nodePositions, selectedRoomId,
+      scenario, nodePositions, nodeSizes, selectedRoomId,
       onSelectRoom, onDeleteRoom,
       (id) => onUpdateScenario({ start_room_id: id }),
     ))
     setEdges(computeEdges(scenario, onDeleteEdge))
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [scenario.rooms, scenario.start_room_id, selectedRoomId, nodePositions, onDeleteEdge])
+  }, [scenario.rooms, scenario.start_room_id, selectedRoomId, nodePositions, nodeSizes, onDeleteEdge])
 
   const onNodeDragStop = useCallback((_: React.MouseEvent, node: Node) => {
     onSetNodePosition(node.id, node.position)

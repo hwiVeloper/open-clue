@@ -4,6 +4,7 @@
 import { useState } from 'react'
 import { Input, Textarea, Label } from '../ui/Input'
 import type { Point, Room, Scenario } from '../../lib/schema'
+import type { RoomSize } from '../../lib/projects'
 import { ActionListEditor } from './ActionListEditor'
 import { PointRequirementsEditor } from './PointRequirementsEditor'
 import { PuzzleEditor } from './PuzzleEditor'
@@ -12,7 +13,9 @@ import { NpcEditor } from './NpcEditor'
 interface RoomDetailPanelProps {
   scenario: Partial<Scenario>
   roomId: string
+  roomSize: RoomSize
   onChange: (patch: Partial<Scenario>) => void
+  onSizeChange: (size: RoomSize) => void
   onClose: () => void
 }
 
@@ -25,7 +28,13 @@ function newPoint(): Point {
   }
 }
 
-export function RoomDetailPanel({ scenario, roomId, onChange, onClose }: RoomDetailPanelProps) {
+const SIZE_OPTIONS: { value: RoomSize; label: string }[] = [
+  { value: 'S', label: 'S' },
+  { value: 'M', label: 'M' },
+  { value: 'L', label: 'L' },
+]
+
+export function RoomDetailPanel({ scenario, roomId, roomSize, onChange, onSizeChange, onClose }: RoomDetailPanelProps) {
   const rooms = scenario.rooms ?? []
   const room = rooms.find(r => r.id === roomId)
   const [expandedPoint, setExpandedPoint] = useState<string | null>(null)
@@ -67,6 +76,22 @@ export function RoomDetailPanel({ scenario, roomId, onChange, onClose }: RoomDet
             onChange={e => updateRoom({ description: e.target.value })}
             placeholder="방 설명"
           />
+        </div>
+        <div className="flex gap-0.5 shrink-0">
+          {SIZE_OPTIONS.map(opt => (
+            <button
+              key={opt.value}
+              onClick={() => onSizeChange(opt.value)}
+              className={`text-[10px] px-1.5 py-0.5 rounded transition-colors ${
+                roomSize === opt.value
+                  ? 'bg-green-700 text-white'
+                  : 'bg-zinc-800 text-zinc-500 hover:text-zinc-300'
+              }`}
+              title={`크기: ${opt.value}`}
+            >
+              {opt.label}
+            </button>
+          ))}
         </div>
         <button
           onClick={onClose}
