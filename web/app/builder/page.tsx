@@ -140,7 +140,7 @@ function BuilderContent() {
       )}
       {overlay === 'export' && (
         <Modal title="내보내기" onClose={() => setOverlay(null)}>
-          <ExportStep scenario={scenario} onPrev={() => setOverlay('verify')} onReset={() => router.push('/')} />
+          <ExportStep scenario={scenario} builderMeta={{ nodePositions, nodeSizes, memos, groups }} onPrev={() => setOverlay('verify')} onReset={() => router.push('/')} />
         </Modal>
       )}
     </div>

@@ -187,6 +187,8 @@ export function RoomCanvas({
       data: {
         text: m.text,
         color: m.color,
+        width: m.width ?? 200,
+        height: m.height ?? 120,
         onUpdate: (patch: Partial<MemoData>) => onUpdateMemo(m.id, patch),
         onDelete: () => onDeleteMemo(m.id),
       } as MemoNodeData,

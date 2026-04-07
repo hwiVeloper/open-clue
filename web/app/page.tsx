@@ -5,6 +5,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { listProjects, newProject, saveProject, deleteProject, migrateLegacyDraft, type ProjectRecord } from '../lib/projects'
 import { ScenarioSchema } from '../lib/schema'
+import { unzipSync, strFromU8 } from 'fflate'
 
 const ASCII_ART = `  ___                    ____ _
  / _ \\ _ __   ___ _ __  / ___| |_   _  ___
@@ -45,19 +46,50 @@ export default function HomePage() {
   const [dragging, setDragging] = useState(false)
 
   const loadFile = useCallback((file: File) => {
-    const reader = new FileReader()
-    reader.onload = async ev => {
-      try {
-        const data = JSON.parse(ev.target?.result as string)
-        const parsed = ScenarioSchema.safeParse(data)
-        if (!parsed.success) { alert('유효하지 않은 시나리오 파일입니다.'); return }
-        const p = newProject()
-        p.scenario = parsed.data
-        await saveProject(p)
-        router.push(`/builder?id=${p.id}`)
-      } catch { alert('파일을 읽을 수 없습니다.') }
+    if (file.name.endsWith('.zip')) {
+      // ZIP: scenario.json + builder.json 복원
+      const reader = new FileReader()
+      reader.onload = async ev => {
+        try {
+          const buf = new Uint8Array(ev.target?.result as ArrayBuffer)
+          const files = unzipSync(buf)
+          const jsonFile = files['scenario.json']
+          if (!jsonFile) { alert('ZIP에 scenario.json이 없습니다.'); return }
+          const data = JSON.parse(strFromU8(jsonFile))
+          const parsed = ScenarioSchema.safeParse(data)
+          if (!parsed.success) { alert('유효하지 않은 시나리오 파일입니다.'); return }
+          const p = newProject()
+          p.scenario = parsed.data
+          // builder.json 복원
+          const metaFile = files['builder.json']
+          if (metaFile) {
+            const meta = JSON.parse(strFromU8(metaFile))
+            if (meta.nodePositions) p.nodePositions = meta.nodePositions
+            if (meta.nodeSizes) p.nodeSizes = meta.nodeSizes
+            if (meta.memos) p.memos = meta.memos
+            if (meta.groups) p.groups = meta.groups
+          }
+          await saveProject(p)
+          router.push(`/builder?id=${p.id}`)
+        } catch { alert('ZIP 파일을 읽을 수 없습니다.') }
+      }
+      reader.readAsArrayBuffer(file)
+    } else {
+      // JSON 단독
+      const reader = new FileReader()
+      reader.onload = async ev => {
+        try {
+          const data = JSON.parse(ev.target?.result as string)
+          const parsed = ScenarioSchema.safeParse(data)
+          if (!parsed.success) { alert('유효하지 않은 시나리오 파일입니다.'); return }
+          const p = newProject()
+          p.scenario = parsed.data
+          await saveProject(p)
+          router.push(`/builder?id=${p.id}`)
+        } catch { alert('파일을 읽을 수 없습니다.') }
+      }
+      reader.readAsText(file)
     }
-    reader.readAsText(file)
   }, [router])
 
   const handleLoad = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -69,8 +101,8 @@ export default function HomePage() {
     e.preventDefault()
     setDragging(false)
     const file = e.dataTransfer.files[0]
-    if (file && file.name.endsWith('.json')) loadFile(file)
-    else if (file) alert('.json 파일만 지원합니다.')
+    if (file && (file.name.endsWith('.json') || file.name.endsWith('.zip'))) loadFile(file)
+    else if (file) alert('.json 또는 .zip 파일만 지원합니다.')
   }, [loadFile])
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
@@ -116,7 +148,7 @@ export default function HomePage() {
           </button>
           <label className="bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-sm px-4 py-2 rounded cursor-pointer transition-colors">
             JSON 불러오기
-            <input type="file" accept=".json" className="hidden" onChange={handleLoad} />
+            <input type="file" accept=".json,.zip" className="hidden" onChange={handleLoad} />
           </label>
         </div>
 

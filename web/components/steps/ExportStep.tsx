@@ -6,14 +6,24 @@ import { Button } from '../ui/Button'
 import { buildDat } from '../../lib/cipher'
 import { buildZip } from '../../lib/zip'
 import type { Scenario } from '../../lib/schema'
+import type { NodePosition } from '../../lib/store'
+import type { RoomSize, MemoData, GroupData } from '../../lib/projects'
+
+interface BuilderMeta {
+  nodePositions: Record<string, NodePosition>
+  nodeSizes: Record<string, RoomSize>
+  memos: MemoData[]
+  groups: GroupData[]
+}
 
 interface ExportStepProps {
   scenario: Partial<Scenario>
+  builderMeta?: BuilderMeta
   onPrev: () => void
   onReset: () => void
 }
 
-export function ExportStep({ scenario, onPrev, onReset }: ExportStepProps) {
+export function ExportStep({ scenario, builderMeta, onPrev, onReset }: ExportStepProps) {
   const [downloading, setDownloading] = useState(false)
   const [done, setDone] = useState(false)
 
@@ -25,7 +35,8 @@ export function ExportStep({ scenario, onPrev, onReset }: ExportStepProps) {
     try {
       const jsonStr = JSON.stringify(scenario, null, 2)
       const datBytes = await buildDat(jsonStr)
-      const zipBytes = await buildZip(jsonStr, datBytes)
+      const metaStr = builderMeta ? JSON.stringify(builderMeta, null, 2) : undefined
+      const zipBytes = await buildZip(jsonStr, datBytes, metaStr)
 
       const blob = new Blob([zipBytes.buffer as ArrayBuffer], { type: 'application/zip' })
       const url = URL.createObjectURL(blob)

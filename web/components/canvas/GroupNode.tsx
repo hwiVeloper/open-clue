@@ -16,25 +16,30 @@ export type GroupNodeData = {
 function GroupNodeComponent({ data }: NodeProps<Node<GroupNodeData>>) {
   const { label, width, height, color, onUpdate, onDelete } = data
   const [editing, setEditing] = useState(false)
-  const resizingRef = useRef(false)
-  const startRef = useRef({ x: 0, y: 0, w: 0, h: 0 })
+  const containerRef = useRef<HTMLDivElement>(null)
 
   const onResizeStart = useCallback((e: React.MouseEvent) => {
     e.stopPropagation()
     e.preventDefault()
-    resizingRef.current = true
-    startRef.current = { x: e.clientX, y: e.clientY, w: width, h: height }
+    const startX = e.clientX
+    const startY = e.clientY
+    const startW = width
+    const startH = height
+    const el = containerRef.current
 
     const onMove = (ev: MouseEvent) => {
-      if (!resizingRef.current) return
-      const newW = Math.max(150, startRef.current.w + ev.clientX - startRef.current.x)
-      const newH = Math.max(100, startRef.current.h + ev.clientY - startRef.current.y)
-      onUpdate({ width: newW, height: newH })
+      if (!el) return
+      const newW = Math.max(150, startW + ev.clientX - startX)
+      const newH = Math.max(100, startH + ev.clientY - startY)
+      el.style.width = newW + 'px'
+      el.style.height = newH + 'px'
     }
-    const onUp = () => {
-      resizingRef.current = false
+    const onUp = (ev: MouseEvent) => {
       window.removeEventListener('mousemove', onMove)
       window.removeEventListener('mouseup', onUp)
+      const finalW = Math.max(150, startW + ev.clientX - startX)
+      const finalH = Math.max(100, startH + ev.clientY - startY)
+      setTimeout(() => onUpdate({ width: finalW, height: finalH }), 0)
     }
     window.addEventListener('mousemove', onMove)
     window.addEventListener('mouseup', onUp)
@@ -42,6 +47,7 @@ function GroupNodeComponent({ data }: NodeProps<Node<GroupNodeData>>) {
 
   return (
     <div
+      ref={containerRef}
       className="rounded-lg border-2 border-dashed relative"
       style={{
         width,
@@ -80,7 +86,7 @@ function GroupNodeComponent({ data }: NodeProps<Node<GroupNodeData>>) {
 
       {/* 리사이즈 핸들 */}
       <div
-        className="absolute bottom-0 right-0 w-4 h-4 cursor-nwse-resize"
+        className="absolute bottom-0 right-0 w-5 h-5 cursor-nwse-resize nopan nodrag"
         onMouseDown={onResizeStart}
       >
         <svg viewBox="0 0 16 16" className="w-full h-full text-zinc-600 hover:text-zinc-400">

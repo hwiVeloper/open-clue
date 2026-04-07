@@ -22,12 +22,6 @@ const SIZE_CLASSES: Record<RoomSize, string> = {
   L: 'w-[210px] h-[150px]',
 }
 
-const SIZE_LABEL_COLORS: Record<RoomSize, string> = {
-  S: 'bg-zinc-700 text-zinc-400',
-  M: 'bg-blue-900 text-blue-300',
-  L: 'bg-amber-900 text-amber-300',
-}
-
 function RoomNodeComponent({ data }: NodeProps<Node<RoomNodeData>>) {
   const { room, size = 'M', isStart, isSelected, onSelect, onDelete, onSetStart } = data
 
@@ -36,7 +30,7 @@ function RoomNodeComponent({ data }: NodeProps<Node<RoomNodeData>>) {
       onClick={onSelect}
       className={`
         relative bg-zinc-900 border-2 rounded-lg p-3 cursor-pointer select-none
-        transition-all duration-150 overflow-hidden
+        transition-all duration-150
         ${SIZE_CLASSES[size]}
         ${isSelected
           ? 'border-green-400 shadow-lg shadow-green-900/40'
@@ -57,10 +51,6 @@ function RoomNodeComponent({ data }: NodeProps<Node<RoomNodeData>>) {
           START
         </div>
       )}
-      <div className={`absolute -top-2.5 right-2 text-[9px] font-bold px-1.5 rounded-full ${SIZE_LABEL_COLORS[size]}`}>
-        {size}
-      </div>
-
       <div className="text-sm font-semibold text-white truncate max-w-[160px]">
         {room.name || '(이름 없음)'}
       </div>

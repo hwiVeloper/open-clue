@@ -119,7 +119,7 @@ export function useBuilderStore(projectId: string | null) {
 
   // Memo CRUD
   const addMemo = useCallback((pos: { x: number; y: number }) => {
-    const memo: MemoData = { id: `memo-${Date.now()}`, text: '', color: '#fde047', position: pos }
+    const memo: MemoData = { id: `memo-${Date.now()}`, text: '', color: '#fde047', position: pos, width: 200, height: 120 }
     setProject(p => ({ ...p, memos: [...(p.memos ?? []), memo] }))
     return memo.id
   }, [setProject])
