@@ -1,7 +1,7 @@
 // web/app/page.tsx
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { listProjects, newProject, saveProject, deleteProject, migrateLegacyDraft, type ProjectRecord } from '../lib/projects'
 import { ScenarioSchema } from '../lib/schema'
@@ -42,9 +42,9 @@ export default function HomePage() {
     setProjects(ps => ps.filter(p => p.id !== id))
   }
 
-  const handleLoad = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) return
+  const [dragging, setDragging] = useState(false)
+
+  const loadFile = useCallback((file: File) => {
     const reader = new FileReader()
     reader.onload = async ev => {
       try {
@@ -58,10 +58,37 @@ export default function HomePage() {
       } catch { alert('파일을 읽을 수 없습니다.') }
     }
     reader.readAsText(file)
+  }, [router])
+
+  const handleLoad = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) loadFile(file)
   }
 
+  const handleDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault()
+    setDragging(false)
+    const file = e.dataTransfer.files[0]
+    if (file && file.name.endsWith('.json')) loadFile(file)
+    else if (file) alert('.json 파일만 지원합니다.')
+  }, [loadFile])
+
+  const handleDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault()
+    setDragging(true)
+  }, [])
+
+  const handleDragLeave = useCallback(() => {
+    setDragging(false)
+  }, [])
+
   return (
-    <main className="min-h-screen bg-zinc-950 text-white">
+    <main
+      className={`min-h-screen bg-zinc-950 text-white transition-colors ${dragging ? 'ring-2 ring-inset ring-green-500 bg-green-950/10' : ''}`}
+      onDrop={handleDrop}
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+    >
       <div className="max-w-3xl mx-auto px-6 py-12">
         {/* 헤더 */}
         <div className="mb-10 text-center">
@@ -92,6 +119,13 @@ export default function HomePage() {
             <input type="file" accept=".json" className="hidden" onChange={handleLoad} />
           </label>
         </div>
+
+        {/* 드래그 오버레이 */}
+        {dragging && (
+          <div className="text-center py-8 mb-4 border-2 border-dashed border-green-500 rounded-lg">
+            <p className="text-green-400 text-sm">JSON 파일을 여기에 놓으세요</p>
+          </div>
+        )}
 
         {/* 프로젝트 목록 */}
         {loading ? (
