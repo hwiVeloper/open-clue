@@ -45,9 +45,26 @@ export default function HomePage() {
 
   const [dragging, setDragging] = useState(false)
 
+  const importScenarioData = useCallback(async (data: Record<string, unknown>) => {
+    // _builder 메타데이터 추출 후 시나리오에서 제거
+    const { _builder, ...scenarioData } = data as Record<string, unknown> & { _builder?: Record<string, unknown> }
+    const parsed = ScenarioSchema.safeParse(scenarioData)
+    if (!parsed.success) { alert('유효하지 않은 시나리오 파일입니다.'); return }
+    const p = newProject()
+    p.scenario = parsed.data
+    if (_builder) {
+      const meta = _builder as Record<string, unknown>
+      if (meta.nodePositions) p.nodePositions = meta.nodePositions as typeof p.nodePositions
+      if (meta.nodeSizes) p.nodeSizes = meta.nodeSizes as typeof p.nodeSizes
+      if (meta.memos) p.memos = meta.memos as typeof p.memos
+      if (meta.groups) p.groups = meta.groups as typeof p.groups
+    }
+    await saveProject(p)
+    router.push(`/builder?id=${p.id}`)
+  }, [router])
+
   const loadFile = useCallback((file: File) => {
     if (file.name.endsWith('.zip')) {
-      // ZIP: scenario.json + builder.json 복원
       const reader = new FileReader()
       reader.onload = async ev => {
         try {
@@ -55,42 +72,20 @@ export default function HomePage() {
           const files = unzipSync(buf)
           const jsonFile = files['scenario.json']
           if (!jsonFile) { alert('ZIP에 scenario.json이 없습니다.'); return }
-          const data = JSON.parse(strFromU8(jsonFile))
-          const parsed = ScenarioSchema.safeParse(data)
-          if (!parsed.success) { alert('유효하지 않은 시나리오 파일입니다.'); return }
-          const p = newProject()
-          p.scenario = parsed.data
-          // builder.json 복원
-          const metaFile = files['builder.json']
-          if (metaFile) {
-            const meta = JSON.parse(strFromU8(metaFile))
-            if (meta.nodePositions) p.nodePositions = meta.nodePositions
-            if (meta.nodeSizes) p.nodeSizes = meta.nodeSizes
-            if (meta.memos) p.memos = meta.memos
-            if (meta.groups) p.groups = meta.groups
-          }
-          await saveProject(p)
-          router.push(`/builder?id=${p.id}`)
+          await importScenarioData(JSON.parse(strFromU8(jsonFile)))
         } catch { alert('ZIP 파일을 읽을 수 없습니다.') }
       }
       reader.readAsArrayBuffer(file)
     } else {
-      // JSON 단독
       const reader = new FileReader()
       reader.onload = async ev => {
         try {
-          const data = JSON.parse(ev.target?.result as string)
-          const parsed = ScenarioSchema.safeParse(data)
-          if (!parsed.success) { alert('유효하지 않은 시나리오 파일입니다.'); return }
-          const p = newProject()
-          p.scenario = parsed.data
-          await saveProject(p)
-          router.push(`/builder?id=${p.id}`)
+          await importScenarioData(JSON.parse(ev.target?.result as string))
         } catch { alert('파일을 읽을 수 없습니다.') }
       }
       reader.readAsText(file)
     }
-  }, [router])
+  }, [importScenarioData])
 
   const handleLoad = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]

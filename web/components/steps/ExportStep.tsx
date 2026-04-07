@@ -33,10 +33,15 @@ export function ExportStep({ scenario, builderMeta, onPrev, onReset }: ExportSte
   const handleDownload = async () => {
     setDownloading(true)
     try {
-      const jsonStr = JSON.stringify(scenario, null, 2)
-      const datBytes = await buildDat(jsonStr)
-      const metaStr = builderMeta ? JSON.stringify(builderMeta, null, 2) : undefined
-      const zipBytes = await buildZip(jsonStr, datBytes, metaStr)
+      // scenario.json에 _builder 메타데이터 포함
+      const scenarioWithMeta = builderMeta
+        ? { ...scenario, _builder: builderMeta }
+        : scenario
+      const jsonStr = JSON.stringify(scenarioWithMeta, null, 2)
+      // DAT 빌드에는 _builder 제외 (게임 엔진용)
+      const pureJsonStr = JSON.stringify(scenario, null, 2)
+      const datBytes = await buildDat(pureJsonStr)
+      const zipBytes = await buildZip(jsonStr, datBytes)
 
       const blob = new Blob([zipBytes.buffer as ArrayBuffer], { type: 'application/zip' })
       const url = URL.createObjectURL(blob)
